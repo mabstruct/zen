@@ -59,3 +59,20 @@ def test_report_order_follows_kinds(vault: Path):
     f = health.check(vt.scan(vault), NOW)
     order = [health.KINDS.index(x.kind) for x in f]
     assert order == sorted(order)
+
+
+def test_naive_and_malformed_timestamps_tolerated(vault: Path):
+    write(vault / "00_inbox" / "dateonly.md", "---\ntitle: D\ncreated: 2026-09-01\n---\nx\n")
+    write(
+        vault / "10_ai" / "bad.md",
+        "---\ntitle: Bad\ntype: note\nupdated: not-a-date\ningested: 2026-10-03T09:00:00+02:00\n---\nx\n",
+    )
+    f = health.check(vt.scan(vault), NOW)
+    assert "00_inbox/dateonly.md" in kinds(f, "inbox-stale")
+    assert "10_ai/bad.md" not in kinds(f, "wiki-behind")
+
+
+def test_wiki_title_not_duplicate_of_note(vault: Path):
+    write(vault / "10_ai" / "transformers.md", "---\ntitle: Transformers\ntype: note\n---\nx\n")
+    f = health.check(vt.scan(vault), NOW)
+    assert "10_ai/transformers.md" not in kinds(f, "duplicate-title")

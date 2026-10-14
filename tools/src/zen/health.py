@@ -29,7 +29,13 @@ class Finding:
 
 
 def _ts(s: str | None) -> datetime | None:
-    return datetime.fromisoformat(s) if s else None
+    if not s:
+        return None
+    try:
+        dt = datetime.fromisoformat(s)
+    except ValueError:
+        return None
+    return dt.astimezone() if dt.tzinfo is None else dt
 
 
 def check(scan: VaultScan, now: datetime, inbox_days: int = 7) -> list[Finding]:
@@ -62,7 +68,7 @@ def check(scan: VaultScan, now: datetime, inbox_days: int = 7) -> list[Finding]:
 
     titles: dict[str, list[str]] = defaultdict(list)
     for d in docs.values():
-        if d.type != "wiki-meta":
+        if d.type in CONTENT_TYPES:
             titles[d.title.strip().lower()].append(d.rel)
     for title, rels in sorted(titles.items()):
         if len(rels) > 1:
