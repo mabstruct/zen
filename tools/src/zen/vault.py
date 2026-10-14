@@ -101,6 +101,28 @@ def _type_of(meta: dict, rel: str) -> str:
     return "wiki-meta" if rel.startswith("90_wiki/") else "note"
 
 
+FENCE_RE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
+INLINE_CODE_RE = re.compile(r"(?<!`)(`+)(?!`)(.+?)(?<!`)\1(?!`)")
+
+
+def _strip_code(body: str) -> str:
+    out: list[str] = []
+    fence: str | None = None
+    for line in body.split("\n"):
+        m = FENCE_RE.match(line)
+        if fence is None:
+            if m:
+                fence = m.group(1)[0] * len(m.group(1))
+                out.append("")
+            else:
+                out.append(INLINE_CODE_RE.sub(" ", line))
+        else:
+            out.append("")
+            if m and m.group(1)[0] == fence[0] and len(m.group(1)) >= len(fence) and not line.strip().strip(fence[0]):
+                fence = None
+    return "\n".join(out)
+
+
 def _raw_links(body: str) -> tuple[list[str], list[str]]:
     md: list[str] = []
     for angle, bare in MD_LINK_RE.findall(body):
@@ -159,7 +181,8 @@ def scan(root: Path) -> VaultScan:
                 doc = fm.read(path)
             except ValueError:
                 doc = fm.Document({}, path.read_text(encoding="utf-8"))
-            md_links, wiki_links = _raw_links(doc.body)
+            code_free = _strip_code(doc.body)
+            md_links, wiki_links = _raw_links(code_free)
             links = [_resolve_md(rel_dir, t) for t in md_links]
             pending_wikilinks[rel] = wiki_links
             docs[rel] = Doc(
@@ -176,7 +199,7 @@ def scan(root: Path) -> VaultScan:
                 captured=(doc.meta.get("source") or {}).get("captured") if isinstance(doc.meta.get("source"), dict) else None,
                 ingested=doc.meta.get("ingested"),
                 size=path.stat().st_size,
-                open_conflicts=CONFLICT_RE.findall(doc.body),
+                open_conflicts=CONFLICT_RE.findall(code_free),
             )
 
     by_title = {d.title.lower(): d.rel for d in docs.values()}

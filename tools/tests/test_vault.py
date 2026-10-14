@@ -84,3 +84,32 @@ def test_scan_tolerates_non_mapping_frontmatter(vault: Path):
     (vault / "10_ai" / "bad.md").write_text("---\n- a\n---\n# Bad\n", encoding="utf-8")
     s = vt.scan(vault)
     assert "10_ai/bad.md" in s.docs
+
+
+def _example(vault: Path, fence: str):
+    from conftest import write
+
+    write(
+        vault / "11_research" / "examples.md",
+        "---\ntitle: Examples\ntype: note\n---\n"
+        f"Real [paper](../10_ai/attention.md) and `[x](nope-inline.md)`.\n\n{fence}md\n"
+        "[gone](nope-fenced.md) [[NoSuchPage]]\n> [!conflict] #c-0099 — open\n> Decision: pending\n"
+        f"{fence}\n",
+    )
+    return vt.scan(vault)
+
+
+def test_code_fence_and_inline_code_ignored(vault: Path):
+    s = _example(vault, "```")
+    d = s.docs["11_research/examples.md"]
+    assert d.links == ["10_ai/attention.md"]
+    assert d.open_conflicts == []
+    assert not any(src == d.rel for src, _ in s.broken_links)
+
+
+def test_tilde_fence_ignored(vault: Path):
+    s = _example(vault, "~~~")
+    d = s.docs["11_research/examples.md"]
+    assert d.links == ["10_ai/attention.md"]
+    assert d.open_conflicts == []
+    assert not any(src == d.rel for src, _ in s.broken_links)
