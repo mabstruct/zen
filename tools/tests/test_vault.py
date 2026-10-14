@@ -78,3 +78,9 @@ def test_links_to_originals_are_valid_but_not_doc_links(vault: Path):
     assert "10_ai/_originals/1706.03762.pdf" not in s.docs["10_ai/attention.md"].links
     assert not any(t == "10_ai/_originals/1706.03762.pdf" for _, t in s.broken_links)
     assert ("10_ai/attention.md", "10_ai/_originals/none.pdf") in s.broken_links
+
+
+def test_scan_tolerates_non_mapping_frontmatter(vault: Path):
+    (vault / "10_ai" / "bad.md").write_text("---\n- a\n---\n# Bad\n", encoding="utf-8")
+    s = vt.scan(vault)
+    assert "10_ai/bad.md" in s.docs

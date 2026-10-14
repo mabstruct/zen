@@ -113,3 +113,50 @@ def test_report_summary_counts(vault: Path, tmp_path: Path):
     src = tmp_path / "x.html"; src.write_text("<p>hi</p>", encoding="utf-8")
     rep = intake.Report([intake.intake_item(vault, str(src), "10_ai", now=NOW), intake.intake_item(vault, str(src), "10_ai", now=NOW)])
     assert "filed: 1" in rep.summary() and "duplicate: 1" in rep.summary()
+
+
+def test_staged_original_follows_companion_when_filed(vault: Path):
+    (vault / "00_inbox" / "drop.html").write_text("<p>drop</p>", encoding="utf-8")
+    intake.intake_inbox(vault, None, now=NOW)
+    assert (vault / "00_inbox" / "_originals" / "drop.html").exists()
+    intake.intake_inbox(vault, "10_ai", now=NOW)
+    doc = fm.read(vault / "10_ai" / "drop.md")
+    assert doc.meta["source"]["local"] == "_originals/drop.html"
+    assert (vault / "10_ai" / "_originals" / "drop.html").exists()
+    assert not (vault / "00_inbox" / "_originals" / "drop.html").exists()
+
+
+def test_failed_url_is_deduped_by_url(vault: Path):
+    def boom(u):
+        raise OSError("timeout")
+
+    intake.intake_item(vault, "https://example.com/a", "10_ai", fetch=boom, now=NOW)
+    before = sorted(p.name for p in vault.rglob("*") if p.is_file())
+    r = intake.intake_item(vault, "https://example.com/a", "10_ai", fetch=boom, now=NOW)
+    assert r.status == "duplicate"
+    assert before == sorted(p.name for p in vault.rglob("*") if p.is_file())
+
+
+def test_bad_item_does_not_stop_batch(vault: Path):
+    (vault / "00_inbox" / "bad.md").write_text("---\n- a\n---\n# X\n", encoding="utf-8")
+    (vault / "00_inbox" / "good.html").write_text("<p>ok</p>", encoding="utf-8")
+    rep = intake.intake_inbox(vault, "10_ai", now=NOW)
+    st = {Path(i.input).name: i.status for i in rep.items}
+    assert st["good.html"] == "filed" and st["bad.md"] == "failed"
+
+
+def test_extraction_failure_rolls_back(vault: Path, tmp_path: Path, monkeypatch):
+    def boom(p):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(intake, "extract", boom)
+    src = tmp_path / "x.txt"; src.write_text("hi", encoding="utf-8")
+    r = intake.intake_item(vault, str(src), "10_ai", now=NOW)
+    assert r.status == "failed"
+    assert not list((vault / "10_ai" / "_originals").glob("x*"))
+    assert not (vault / "10_ai" / "x.md").exists()
+
+
+def test_path_traversal_cluster_rejected(vault: Path, tmp_path: Path):
+    src = tmp_path / "x.txt"; src.write_text("hi", encoding="utf-8")
+    assert intake.intake_item(vault, str(src), "10_ai/../..", now=NOW).status == "failed"

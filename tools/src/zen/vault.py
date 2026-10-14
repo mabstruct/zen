@@ -155,7 +155,10 @@ def scan(root: Path) -> VaultScan:
                 text = path.read_text(encoding="utf-8").strip()
                 cluster_desc[rel_dir.parts[0]] = text.splitlines()[0] if text else ""
                 continue
-            doc = fm.read(path)
+            try:
+                doc = fm.read(path)
+            except ValueError:
+                doc = fm.Document({}, path.read_text(encoding="utf-8"))
             md_links, wiki_links = _raw_links(doc.body)
             links = [_resolve_md(rel_dir, t) for t in md_links]
             pending_wikilinks[rel] = wiki_links
