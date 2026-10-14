@@ -124,7 +124,7 @@ def intake_item(vault: Path, spec: str, cluster: str | None, *, fetch=sources.de
             body_text = ex.markdown
             original_rel = orig_path.relative_to(vault).as_posix()
             comp_path = _free(target_dir / f"{stem}.md")
-            fm.write(comp_path, fm.Document(meta, "## Summary\n\n## Extracted text\n" + body_text))
+            fm.write(comp_path, fm.Document(meta, f"# {meta['title']}\n\n## Summary\n\n## Extracted text\n" + body_text))
         except Exception as e:
             if moved:
                 shutil.move(str(orig_path), src_path)
@@ -137,7 +137,7 @@ def intake_item(vault: Path, spec: str, cluster: str | None, *, fetch=sources.de
         return ItemResult(spec, status, companion=comp_path.relative_to(vault).as_posix(), original=original_rel, note="")
 
     comp_path = _free(target_dir / f"{stem}.md")
-    fm.write(comp_path, fm.Document(meta, "## Summary\n\n## Extracted text\n"))
+    fm.write(comp_path, fm.Document(meta, f"# {meta['title']}\n\n## Summary\n\n## Extracted text\n"))
     if res.url:
         by_url[res.url] = comp_path.relative_to(vault).as_posix()
     return ItemResult(spec, status, companion=comp_path.relative_to(vault).as_posix(), original=None, note=res.error or "")

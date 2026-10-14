@@ -87,12 +87,16 @@ extraction: ok | failed | none                 # none = images and other opaque 
 Companion body:
 
 ```markdown
+# <title>
+
 ## Summary
 <empty until wiki ingest writes it, or you do>
 
 ## Extracted text
 <markitdown output>
 ```
+
+The heading repeats `title` so readers and search tools that take the first heading show the right name.
 
 Rules:
 - Cluster is derived from the path, never stored in frontmatter.

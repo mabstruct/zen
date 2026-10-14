@@ -20,7 +20,8 @@ def test_file_into_cluster_writes_original_and_companion(vault: Path, tmp_path: 
     assert doc.meta["source"]["hash"].startswith("sha256:") and doc.meta["source"]["captured"] == NOW
     assert doc.meta["snapshot"] == "ok" and doc.meta["extraction"] == "ok"
     assert "ingested" not in doc.meta
-    assert doc.body.startswith("## Summary\n\n## Extracted text\n") and "Survey text" in doc.body
+    assert doc.body.startswith(f"# {doc.meta['title']}\n\n## Summary\n\n## Extracted text\n") and "Survey text" in doc.body
+    assert doc.body.splitlines()[0] == "# " + doc.meta["title"]
 
 
 def test_duplicate_by_hash_is_skipped_and_nothing_written(vault: Path, tmp_path: Path):
@@ -79,7 +80,7 @@ def test_image_companion_is_metadata_only(vault: Path, tmp_path: Path):
     src = tmp_path / "diagram.png"; src.write_bytes(b"\x89PNG\r\n")
     r = intake.intake_item(vault, str(src), "10_ai", now=NOW)
     doc = fm.read(vault / r.companion)
-    assert doc.meta["extraction"] == "none" and doc.body == "## Summary\n\n## Extracted text\n"
+    assert doc.meta["extraction"] == "none" and doc.body == "# diagram\n\n## Summary\n\n## Extracted text\n"
 
 
 def test_large_file_flag(vault: Path, tmp_path: Path, monkeypatch):
