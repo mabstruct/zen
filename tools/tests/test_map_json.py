@@ -1,0 +1,35 @@
+import json
+from datetime import datetime
+from pathlib import Path
+
+from zen import map_json, vault as vt
+
+NOW = datetime.fromisoformat("2026-10-14T12:00:00+02:00")
+
+
+def test_nodes_cover_docs_originals_tags(vault: Path):
+    m = map_json.build(vt.scan(vault), NOW)
+    ids = {n["id"] for n in m["nodes"]}
+    assert "10_ai/attention.md" in ids
+    assert "10_ai/_originals/1706.03762.pdf" in ids
+    assert "tag:transformers" in ids
+    paper = next(n for n in m["nodes"] if n["id"] == "10_ai/attention.md")
+    assert paper["cluster"] == "10_ai" and paper["type"] == "companion"
+    assert paper["captured"] == "2026-10-01T10:00:00+02:00" and paper["ingested"] is None
+    assert m["generated"] == "2026-10-14T12:00:00+02:00"
+
+
+def test_edges_link_tag_source_wiki_only_to_existing_nodes(vault: Path):
+    m = map_json.build(vt.scan(vault), NOW)
+    edges = {(e["from"], e["to"], e["kind"]) for e in m["edges"]}
+    assert ("11_research/linker.md", "10_ai/attention.md", "link") in edges
+    assert ("10_ai/attention.md", "tag:transformers", "tag") in edges
+    assert ("10_ai/attention.md", "10_ai/_originals/1706.03762.pdf", "source") in edges
+    assert ("90_wiki/topics/transformers.md", "10_ai/attention.md", "wiki") in edges
+    assert not any(e["to"] == "10_ai/nope.md" for e in m["edges"])
+
+
+def test_json_serialisable_and_sorted(vault: Path):
+    m = map_json.build(vt.scan(vault), NOW)
+    json.dumps(m)
+    assert [n["id"] for n in m["nodes"]] == sorted(n["id"] for n in m["nodes"])
