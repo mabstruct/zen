@@ -16,7 +16,7 @@ import yaml, pathlib
 p = pathlib.Path(".qmd/index.yml")
 cfg = yaml.safe_load(p.read_text()) or {}
 col = cfg.setdefault("collections", {}).setdefault("zen", {})
-want = ["_meta/**", "**/_originals/**", "02_templates/**", "INDEX.md", "**/_cluster.md"]
+want = ["_meta/**", "**/_originals/**", "02_templates/**", "INDEX.md", "**/_cluster.md", "90_wiki/SCHEMA.md", "90_wiki/LOG.md"]
 col["ignore"] = sorted(set(col.get("ignore", [])) | set(want))
 p.write_text(yaml.safe_dump(cfg, sort_keys=False))
 print("ignore:", col["ignore"])

@@ -7,6 +7,8 @@ from datetime import datetime
 from pathlib import Path, PurePosixPath
 from urllib.parse import unquote
 
+import yaml
+
 from . import frontmatter as fm
 
 SKIP_DIRS = {"_meta", "_originals", "02_templates", ".git", ".qmd", ".obsidian"}
@@ -36,6 +38,7 @@ class Doc:
     size: int
     open_conflicts: list[str] = field(default_factory=list)
     inbound: int = 0
+    frontmatter_error: str | None = None
 
 
 @dataclass
@@ -85,7 +88,9 @@ def _tags_of(meta: dict) -> list[str]:
         return []
     if isinstance(raw, str):
         return [raw]
-    return [str(t) for t in raw]
+    if isinstance(raw, list):
+        return [str(t) for t in raw]
+    return [str(raw)]
 
 
 def _title_of(meta: dict, body: str, path: Path) -> str:
@@ -177,10 +182,13 @@ def scan(root: Path) -> VaultScan:
                 text = path.read_text(encoding="utf-8").strip()
                 cluster_desc[rel_dir.parts[0]] = text.splitlines()[0] if text else ""
                 continue
+            fm_error: str | None = None
             try:
                 doc = fm.read(path)
-            except ValueError:
+            except (ValueError, yaml.YAMLError) as e:
                 doc = fm.Document({}, path.read_text(encoding="utf-8"))
+                lines = f"{type(e).__name__}: {e}".splitlines()
+                fm_error = lines[0] if lines else type(e).__name__
             code_free = _strip_code(doc.body)
             md_links, wiki_links = _raw_links(code_free)
             links = [_resolve_md(rel_dir, t) for t in md_links]
@@ -200,6 +208,7 @@ def scan(root: Path) -> VaultScan:
                 ingested=doc.meta.get("ingested"),
                 size=path.stat().st_size,
                 open_conflicts=CONFLICT_RE.findall(code_free),
+                frontmatter_error=fm_error,
             )
 
     by_title = {d.title.lower(): d.rel for d in docs.values()}

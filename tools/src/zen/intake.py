@@ -169,8 +169,8 @@ def _file_note(vault: Path, path: Path, doc: fm.Document, target_dir: Path) -> s
     local = src.get("local") if isinstance(src, dict) and doc.meta.get("type") == "companion" else None
     moved_orig: tuple[Path, Path] | None = None
     if local:
-        old = vault / INBOX / local
-        if old.is_file():
+        old = vault / INBOX / str(local)
+        if old.resolve().is_relative_to((vault / INBOX / "_originals").resolve()) and old.is_file():
             new = _free(target_dir / "_originals" / Path(local).name)
             new.parent.mkdir(parents=True, exist_ok=True)
             shutil.move(str(old), new)

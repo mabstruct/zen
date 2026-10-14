@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from .vault import VaultScan
 
 KINDS = (
+    "bad-frontmatter",
     "inbox-stale",
     "snapshot-missing",
     "extraction-failed",
@@ -28,8 +29,8 @@ class Finding:
     detail: str = ""
 
 
-def _ts(s: str | None) -> datetime | None:
-    if not s:
+def _ts(s: object) -> datetime | None:
+    if not isinstance(s, str) or not s:
         return None
     try:
         dt = datetime.fromisoformat(s)
@@ -41,6 +42,10 @@ def _ts(s: str | None) -> datetime | None:
 def check(scan: VaultScan, now: datetime, inbox_days: int = 7) -> list[Finding]:
     out: list[Finding] = []
     docs = scan.docs
+
+    for d in docs.values():
+        if d.frontmatter_error:
+            out.append(Finding("bad-frontmatter", d.rel, d.frontmatter_error))
 
     cutoff = now - timedelta(days=inbox_days)
     for rel in scan.inbox:

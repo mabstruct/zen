@@ -150,7 +150,7 @@ Further rules: never hand-edit `90_wiki/`, `INDEX.md`, `_meta/`; after writing t
 
 ## 8. Intake — `zen-intake` (deterministic, no AI)
 
-Input: a file or folder path, a URL, an arXiv id/URL, a DOI, or nothing (= everything in `00_inbox/`). Option `--cluster <id>`.
+Input: a file or folder path, a URL, an arXiv id/URL, a DOI, or nothing (= everything in `00_inbox/`). A folder = its files, non-recursive; subfolders of `00_inbox/` are ignored. Option `--cluster <id>`.
 
 Per item:
 1. **Resolve** the source kind. arXiv → fetch PDF; URL → fetch page; DOI → resolve to a freely available PDF, else the landing page; file → use as is.
@@ -239,3 +239,8 @@ No graph or web app. No OCR. No automatic cluster assignment. No Obsidian plugin
 - Verify qmd: install, CLI surface, ignore configuration, re-index command, where it stores its database (keep it out of `vault/`).
 - Verify `markitdown` coverage for the listed formats and its handling of arXiv PDFs.
 - Decide whether `zen/` is its own git repo (currently initialised) and whether `vault/` is committed — proposal: yes to both, `_originals/` included, with a size guard in `.gitignore` for files over 50 MB.
+
+### Known deviations, v1.1
+
+- DOI resolution fetches the landing page only; there is no free-PDF lookup.
+- An explicit `.md` path given to intake from outside the inbox is treated as an original with a companion rather than filed as a note.

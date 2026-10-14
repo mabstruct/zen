@@ -100,3 +100,10 @@ The heading word is `ingest`, or `re-ingest` for a re-ingest.
 - decision: "<text>"
 - pages: topics/attention-mechanism.md, entities/transformer.md
 ```
+
+`## <timestamp> fix <page path>` — a correction to ingest output (a missing citation, a typo in a claim), allowed only immediately after an ingest or resolve run and only by the session that ran it; one line per changed page.
+
+```markdown
+## 2026-10-15T09:20:00+02:00 fix topics/attention-mechanism.md
+- added missing citation to the second claim
+```

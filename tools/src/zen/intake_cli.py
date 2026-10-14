@@ -15,7 +15,14 @@ def main(argv: list[str] | None = None) -> int:
     a = ap.parse_args(argv)
 
     if a.specs:
-        report = intake.Report([intake.intake_item(a.vault, s, a.cluster) for s in a.specs])
+        specs: list[str] = []
+        for s in a.specs:
+            p = Path(s)
+            if p.is_dir():
+                specs.extend(str(f) for f in sorted(p.iterdir(), key=lambda f: f.name) if f.is_file() and not f.name.startswith("."))
+            else:
+                specs.append(s)
+        report = intake.Report([intake.intake_item(a.vault, s, a.cluster) for s in specs])
     else:
         report = intake.intake_inbox(a.vault, a.cluster)
     print(report.summary())

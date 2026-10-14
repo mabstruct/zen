@@ -161,3 +161,24 @@ def test_extraction_failure_rolls_back(vault: Path, tmp_path: Path, monkeypatch)
 def test_path_traversal_cluster_rejected(vault: Path, tmp_path: Path):
     src = tmp_path / "x.txt"; src.write_text("hi", encoding="utf-8")
     assert intake.intake_item(vault, str(src), "10_ai/../..", now=NOW).status == "failed"
+
+
+def test_bad_frontmatter_elsewhere_does_not_stop_inbox(vault: Path):
+    (vault / "11_research").mkdir(exist_ok=True)
+    (vault / "11_research" / "bad.md").write_text("---\ntitle: Re: budget\n---\n# B\n", encoding="utf-8")
+    (vault / "00_inbox" / "good.html").write_text("<p>hi</p>", encoding="utf-8")
+    r = intake.intake_inbox(vault, "10_ai", now=NOW)
+    assert any(i.input.endswith("good.html") and i.status == "filed" for i in r.items)
+    assert (vault / "10_ai" / "good.md").exists()
+
+
+def test_source_local_outside_originals_is_not_moved(vault: Path, tmp_path: Path):
+    outside = tmp_path / "outside.txt"
+    outside.write_text("secret", encoding="utf-8")
+    (vault / "00_inbox" / "c.md").write_text(
+        "---\ntitle: C\ntype: companion\nsource:\n  kind: file\n  local: ../../../outside.txt\n---\n# C\n", encoding="utf-8")
+    r = intake.intake_inbox(vault, "10_ai", now=NOW)
+    assert r.items[0].status == "filed"
+    assert outside.exists()
+    assert not (vault / "10_ai" / "_originals" / "outside.txt").exists()
+    assert not (vault / "00_inbox" / "_originals").exists() or not list((vault / "00_inbox" / "_originals").iterdir())

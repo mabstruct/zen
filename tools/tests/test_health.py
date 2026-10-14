@@ -76,3 +76,11 @@ def test_wiki_title_not_duplicate_of_note(vault: Path):
     write(vault / "10_ai" / "transformers.md", "---\ntitle: Transformers\ntype: note\n---\nx\n")
     f = health.check(vt.scan(vault), NOW)
     assert "10_ai/transformers.md" not in kinds(f, "duplicate-title")
+
+
+def test_bad_frontmatter_finding_and_non_string_date(vault: Path):
+    write(vault / "11_research" / "bad.md", "---\ntitle: Re: budget\n---\n# B\n")
+    write(vault / "11_research" / "num.md", "---\ntitle: N\nupdated: 20260101\ncreated: 20260101\ningested: 20260101\n---\nx\n")
+    f = health.check(vt.scan(vault), NOW)
+    assert kinds(f, "bad-frontmatter") == ["11_research/bad.md"]
+    assert f[0].kind == "bad-frontmatter"

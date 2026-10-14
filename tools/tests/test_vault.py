@@ -113,3 +113,14 @@ def test_tilde_fence_ignored(vault: Path):
     assert d.links == ["10_ai/attention.md"]
     assert d.open_conflicts == []
     assert not any(src == d.rel for src, _ in s.broken_links)
+
+
+def test_bad_frontmatter_and_numeric_tags_do_not_crash(vault: Path):
+    from conftest import write
+    write(vault / "11_research" / "bad.md", "---\ntitle: Re: budget\n---\n# Budget thoughts\n\nbody\n")
+    write(vault / "11_research" / "num.md", "---\ntitle: N\ntags: 2024\n---\nx\n")
+    s = vt.scan(vault)
+    d = s.docs["11_research/bad.md"]
+    assert d.title == "Budget thoughts" and d.frontmatter_error and d.frontmatter_error.count("\n") == 0
+    assert s.docs["11_research/num.md"].tags == ["2024"]
+    assert s.docs["11_research/num.md"].frontmatter_error is None
