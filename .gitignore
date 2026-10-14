@@ -1,10 +1,77 @@
-node_modules/
-dist/
-build/
+# --- secrets / environment ---
 .env
-.env.local
+.env.*
+.env.backup
+!.env.example
+*.pem
+*.key
+
+# --- macOS ---
 .DS_Store
-*.log
-.venv/
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+
+# --- Python ---
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+*.egg-info/
+*.egg
+.eggs/
+build/
+dist/
+wheels/
+pip-wheel-metadata/
+.installed.cfg
+*.manifest
+*.spec
+
+# --- Node (qmd is installed globally; keep local installs out) ---
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# --- qmd project-local index (models + sqlite, regenerable) ---
+.qmd/
+
+# --- logs / temp ---
+*.log
+logs/
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+tmp/
+.cache/
+
+# --- editors / tools ---
+.idea/
+.vscode/
+*.sublime-workspace
+.obsidian/workspace*.json
+
+# --- archives dropped at the repo root by accident (vault/_originals/ is NOT covered on purpose) ---
+/*.zip
+/*.tar
+/*.tar.gz
+/*.tgz
+/*.7z
+/*.dmg
