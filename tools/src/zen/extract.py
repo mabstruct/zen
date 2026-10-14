@@ -25,6 +25,8 @@ def extract(path: Path) -> Extraction:
         magic = MAGIC.get(path.suffix.lower())
         if magic and not path.read_bytes().startswith(magic):
             return Extraction("failed", "", None, f"not a valid {path.suffix.lower()[1:]} file")
+        if path.suffix.lower() == ".pdf":
+            return _extract_pdf(path)
         from markitdown import MarkItDown
 
         result = MarkItDown(enable_plugins=False).convert(str(path))
@@ -34,3 +36,17 @@ def extract(path: Path) -> Extraction:
         return Extraction("ok", text + "\n", result.title or None)
     except Exception as e:  # third-party boundary: every failure becomes a flagged companion
         return Extraction("failed", "", None, f"{type(e).__name__}: {e}")
+
+
+def _extract_pdf(path: Path) -> Extraction:
+    import pymupdf
+
+    doc = pymupdf.open(str(path))
+    try:
+        text = "\n\n".join(page.get_text() for page in doc).strip()
+        title = (doc.metadata or {}).get("title") or None
+    finally:
+        doc.close()
+    if not text:
+        return Extraction("failed", "", title, "empty extraction")
+    return Extraction("ok", text + "\n", title)

@@ -41,3 +41,17 @@ def test_corrupt_pdf_fails_softly(tmp_path: Path):
     p.write_bytes(b"not a pdf")
     r = ex.extract(p)
     assert r.status == "failed" and r.error and r.markdown == ""
+
+
+def test_pdf_preserves_word_spacing(tmp_path: Path):
+    p = tmp_path / "s.pdf"
+    p.write_bytes(make_pdf("The dominant sequence transduction models"))
+    r = ex.extract(p)
+    assert "The dominant sequence transduction models" in r.markdown
+    assert all(len(t) <= 25 for t in r.markdown.split())
+
+
+def test_pdf_title_from_metadata_or_none(tmp_path: Path):
+    p = tmp_path / "t.pdf"
+    p.write_bytes(make_pdf("Hello ZEN"))
+    assert ex.extract(p).title is None
