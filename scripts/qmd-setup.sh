@@ -16,15 +16,20 @@ import yaml, pathlib
 p = pathlib.Path(".qmd/index.yml")
 cfg = yaml.safe_load(p.read_text()) or {}
 col = cfg.setdefault("collections", {}).setdefault("zen", {})
-want = ["_meta/**", "**/_originals/**", "02_templates/**", "INDEX.md"]
+want = ["_meta/**", "**/_originals/**", "02_templates/**", "INDEX.md", "**/_cluster.md"]
 col["ignore"] = sorted(set(col.get("ignore", [])) | set(want))
 p.write_text(yaml.safe_dump(cfg, sort_keys=False))
 print("ignore:", col["ignore"])
 PY
 
-qmd context add qmd://zen "ZEN personal knowledge vault. Notes, document companions (markdown twins of PDFs/articles with extracted text), and a Claude-maintained wiki under 90_wiki. Clusters: 10_ai, 11_research, 12_mabstruct, 13_personal, 14_reading." >/dev/null 2>&1 || true
-qmd context add qmd://zen/90_wiki "Condensed, cross-linked knowledge maintained by Claude. Prefer these pages over raw sources." >/dev/null 2>&1 || true
+if ! qmd context list | grep -qF '/ (root)'; then
+  qmd context add qmd://zen "ZEN personal knowledge vault. Notes, document companions (markdown twins of PDFs/articles with extracted text), and a Claude-maintained wiki under 90_wiki. Clusters: 10_ai, 11_research, 12_mabstruct, 13_personal, 14_reading."
+fi
+if ! qmd context list | grep -qE '^ +90_wiki$'; then
+  qmd context add qmd://zen/90_wiki "Condensed, cross-linked knowledge maintained by Claude. Prefer these pages over raw sources."
+fi
 
+qmd pull
 qmd update
 qmd embed
 qmd status
