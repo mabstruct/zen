@@ -2,7 +2,7 @@
 
 ## What it is
 
-ZEN is a personal knowledge system built around one question: how do I keep notes, documents and what I have learned in one place that Claude can search, cite and keep consistent? It has four capabilities: a markdown vault holding notes and original documents, a deterministic indexer (`zen-index`) and intake tool (`zen-intake`), local hybrid search through qmd, and a Claude-maintained wiki that marks contradictions instead of overwriting them. Claude follows a Brain-First rulebook in `CLAUDE.md`.
+ZEN is a personal knowledge system built around one question: how do I keep notes, documents and what I have learned in one place that Claude can search, cite and keep consistent? Its four capabilities, from the spec: find by meaning, not only keywords (qmd); read what was found with a path back to the original; stay clean — contradictions are marked, never overwritten (the wiki); and trace every document to a captured copy with a date. Claude follows a Brain-First rulebook in `CLAUDE.md`.
 
 ## Layout
 
@@ -43,7 +43,7 @@ In a Claude Code session rooted in `zen/`:
 - `/zen-ingest` condenses new or changed sources into the wiki and marks conflicts.
 - `/zen-index` regenerates the index and shows vault health.
 
-Brain-First ladder: Claude checks the wiki first, then vault notes and companions through search, then original files, and only then the outside world.
+Brain-First ladder: Claude reads `vault/INDEX.md` first, then the wiki, then runs qmd search, then opens exactly one file — never scanning folders and never opening `_originals/`.
 
 ## Tests
 
