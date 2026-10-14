@@ -72,3 +72,41 @@ def test_resolve_fetch_failure_keeps_url_and_filename():
 def test_resolve_missing_file():
     r = src.resolve("/nonexistent/file.pdf")
     assert r.data is None and "not found" in r.error.lower()
+
+
+def test_url_and_doi_stems_ignore_dots():
+    html = lambda u: (b"x", "text/html")
+    pdf = lambda u: (b"x", "application/pdf")
+    assert src.resolve("https://example.com/", fetch=html).filename == "example-com.html"
+    assert src.resolve("https://example.com/x.pdf", fetch=pdf).filename == "example-com-x-pdf.pdf"
+    assert src.resolve("10.1000/abc.v2", fetch=pdf).filename == "10-1000-abc-v2.pdf"
+
+
+def test_classify_arxiv_variants():
+    assert src.classify("hep-th/9901001") == ("arxiv", "hep-th/9901001")
+    assert src.classify("https://arxiv.org/abs/2403.01234?context=cs") == ("arxiv", "2403.01234")
+    assert src.classify("https://export.arxiv.org/pdf/2403.01234v1") == ("arxiv", "2403.01234v1")
+
+
+def test_resolve_old_style_arxiv():
+    calls = []
+
+    def fetch(u):
+        calls.append(u)
+        return b"%PDF", "application/pdf"
+
+    r = src.resolve("hep-th/9901001", fetch=fetch)
+    assert calls == ["https://arxiv.org/pdf/hep-th/9901001"]
+    assert r.filename == "hep-th-9901001.pdf" and r.url == "https://arxiv.org/abs/hep-th/9901001"
+
+
+def test_classify_existing_relative_path_is_file(tmp_path: Path, monkeypatch):
+    (tmp_path / "10.1000").mkdir()
+    (tmp_path / "10.1000" / "notes.pdf").write_bytes(b"x")
+    monkeypatch.chdir(tmp_path)
+    assert src.classify("10.1000/notes.pdf") == ("file", "10.1000/notes.pdf")
+
+
+def test_resolve_bad_fetcher_shape_raises():
+    with pytest.raises(ValueError):
+        src.resolve("https://example.com/a", fetch=lambda u: b"just bytes")

@@ -11,8 +11,8 @@ from urllib.parse import urlparse
 
 Fetcher = Callable[[str], tuple[bytes, str]]
 
-_ARXIV_ID = r"(\d{4}\.\d{4,5}(?:v\d+)?)"
-ARXIV_URL_RE = re.compile(r"^https?://(?:www\.)?arxiv\.org/(?:abs|pdf)/" + _ARXIV_ID + r"(?:\.pdf)?/?$", re.I)
+_ARXIV_ID = r"(\d{4}\.\d{4,5}(?:v\d+)?|[a-z-]+(?:\.[A-Z]{2})?/\d{7}(?:v\d+)?)"
+ARXIV_URL_RE = re.compile(r"^https?://(?:[a-z]+\.)?arxiv\.org/(?:abs|pdf)/" + _ARXIV_ID + r"(?:\.pdf)?/?(?:[?#].*)?$", re.I)
 ARXIV_BARE_RE = re.compile(r"^(?:arxiv:)?" + _ARXIV_ID + r"$", re.I)
 DOI_RE = re.compile(r"^(?:https?://(?:dx\.)?doi\.org/|doi:)?(10\.\d{4,9}/\S+)$", re.I)
 USER_AGENT = "zen-intake/0.1 (+https://github.com/mabstruct/zen)"
@@ -30,6 +30,8 @@ class Resolved:
 
 def classify(spec: str) -> tuple[str, str]:
     s = spec.strip()
+    if Path(s).exists():
+        return "file", s
     if m := ARXIV_URL_RE.match(s):
         return "arxiv", m.group(1)
     if m := ARXIV_BARE_RE.match(s):
@@ -48,6 +50,11 @@ def slugify(name: str, max_len: int = 80) -> str:
     stem = unicodedata.normalize("NFKD", stem).encode("ascii", "ignore").decode()
     stem = re.sub(r"[^a-z0-9]+", "-", stem.lower()).strip("-")[:max_len].strip("-") or "untitled"
     return f"{stem}.{ext.lower()}" if ext else stem
+
+
+def _slug_stem(text: str) -> str:
+    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
+    return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")[:80].strip("-") or "untitled"
 
 
 def sha256(data: bytes) -> str:
@@ -75,7 +82,7 @@ def _ext_for(content_type: str, fallback: str) -> str:
 
 def _url_slug(url: str) -> str:
     u = urlparse(url)
-    return slugify((u.netloc + u.path).rstrip("/") or u.netloc)
+    return _slug_stem((u.netloc + u.path).rstrip("/") or u.netloc)
 
 
 def resolve(spec: str, fetch: Fetcher = default_fetch) -> Resolved:
@@ -86,17 +93,18 @@ def resolve(spec: str, fetch: Fetcher = default_fetch) -> Resolved:
             return Resolved("file", None, slugify(p.name), None, f"file not found: {ident}")
         return Resolved("file", None, slugify(p.name), p.read_bytes())
     if kind == "arxiv":
-        fetch_url, url, base = f"https://arxiv.org/pdf/{ident}", f"https://arxiv.org/abs/{ident}", ident
+        fetch_url, url, base = f"https://arxiv.org/pdf/{ident}", f"https://arxiv.org/abs/{ident}", ident.replace("/", "-")
     elif kind == "doi":
         fetch_url = url = f"https://doi.org/{ident}"
-        base = slugify(ident.replace("/", "-"))
+        base = _slug_stem(ident)
     else:
         fetch_url = url = ident
         base = _url_slug(ident)
     try:
-        data, ctype = fetch(fetch_url)
+        result = fetch(fetch_url)
     except Exception as e:  # network boundary: any failure is reported, never raised
         fallback = "pdf" if kind in ("arxiv", "doi") else "html"
         return Resolved(kind, url, f"{base}.{fallback}", None, f"{type(e).__name__}: {e}")
+    data, ctype = result
     ext = _ext_for(ctype, "pdf" if kind in ("arxiv", "doi") else "html")
     return Resolved(kind, url, f"{base}.{ext}", data)
