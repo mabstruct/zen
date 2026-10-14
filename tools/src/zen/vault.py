@@ -11,7 +11,8 @@ from . import frontmatter as fm
 
 SKIP_DIRS = {"_meta", "_originals", "02_templates", ".git", ".qmd", ".obsidian"}
 GENERATED_FILES = {"INDEX.md"}
-MD_LINK_RE = re.compile(r"(?<!!)\[[^\]]*\]\(([^)\s#]+)(?:#[^)]*)?\)")
+MD_LINK_RE = re.compile(r"(?<!!)\[[^\]]*\]\(\s*(?:<([^>]*)>[^)]*|([^)]*))\)")
+TITLE_RE = re.compile(r"\s+\"[^\"]*\"\s*$")
 WIKILINK_RE = re.compile(r"\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]")
 CONFLICT_RE = re.compile(r"^> \[!conflict\] (#c-\d+) — open\s*$", re.M)
 HEADING_RE = re.compile(r"^#\s+(.+?)\s*$", re.M)
@@ -101,7 +102,12 @@ def _type_of(meta: dict, rel: str) -> str:
 
 
 def _raw_links(body: str) -> tuple[list[str], list[str]]:
-    md = [unquote(t) for t in MD_LINK_RE.findall(body) if "://" not in t and not t.startswith("mailto:")]
+    md: list[str] = []
+    for angle, bare in MD_LINK_RE.findall(body):
+        t = angle if angle else TITLE_RE.sub("", bare.strip())
+        t = unquote(t.split("#")[0].strip())
+        if t and "://" not in t and not t.startswith("mailto:"):
+            md.append(t)
     wiki = [w.strip() for w in WIKILINK_RE.findall(body)]
     return md, wiki
 
@@ -116,7 +122,7 @@ def _resolve_md(rel_dir: PurePosixPath, target: str) -> str:
         elif part != ".":
             parts.append(part)
     out = "/".join(parts)
-    return out if out.endswith(".md") else out + ".md"
+    return out if PurePosixPath(out).suffix else out + ".md"
 
 
 def scan(root: Path) -> VaultScan:
@@ -181,11 +187,18 @@ def scan(root: Path) -> VaultScan:
             else:
                 broken.append((rel, name))
     for d in docs.values():
+        kept: list[str] = []
         for target in d.links:
             if target in docs:
+                kept.append(target)
                 docs[target].inbound += 1
-            elif (d.rel, target) not in broken:
-                broken.append((d.rel, target))
+            elif (root / target).exists():
+                continue
+            else:
+                kept.append(target)
+                if (d.rel, target) not in broken:
+                    broken.append((d.rel, target))
+        d.links = kept
 
     clusters: list[Cluster] = []
     for name in sorted(cluster_dirs):

@@ -52,7 +52,7 @@ def vault(tmp_path: Path) -> Path:
         "created: 2026-10-01T10:00:00+02:00\nupdated: 2026-10-01T10:00:00+02:00\n"
         "tags: [transformers]\nsource:\n  kind: arxiv\n  url: https://arxiv.org/abs/1706.03762\n"
         "  local: _originals/1706.03762.pdf\n  hash: sha256:abc\n  captured: 2026-10-01T10:00:00+02:00\n"
-        "snapshot: ok\nextraction: ok\n---\n## Summary\nThe transformer paper.\n\n## Extracted text\nlong text\n",
+        "snapshot: ok\nextraction: ok\n---\n## Summary\nThe transformer paper.\n\n## Extracted text\nlong text\n\nSee [pdf](_originals/1706.03762.pdf) and [gone](_originals/none.pdf).\n",
     )
     (v / "10_ai" / "_originals").mkdir()
     (v / "10_ai" / "_originals" / "1706.03762.pdf").write_bytes(b"%PDF-1.4 fake")
@@ -66,7 +66,7 @@ def vault(tmp_path: Path) -> Path:
         v / "11_research" / "linker.md",
         "---\ntitle: Linker\ntype: note\ncreated: 2026-10-02T09:00:00+02:00\n"
         "updated: 2026-10-02T09:00:00+02:00\ningested: 2026-10-02T09:00:00+02:00\n---\n"
-        "Links [note](../10_ai/my%20note.md) and [paper](../10_ai/attention.md).\n",
+        "Links [note](../10_ai/my%20note.md) and [paper](../10_ai/attention.md) and [sp](../10_ai/my note.md) and [ab](<../10_ai/my note.md>).\n",
     )
     write(
         v / "11_research" / "orphan.md",

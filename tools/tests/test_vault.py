@@ -32,7 +32,7 @@ def test_clusters_only_1x_folders_with_counts_and_description(vault: Path):
 def test_links_resolve_relative_percent_encoded_and_wikilinks(vault: Path):
     s = vt.scan(vault)
     linker = s.docs["11_research/linker.md"]
-    assert linker.links == ["10_ai/my note.md", "10_ai/attention.md"]
+    assert linker.links == ["10_ai/my note.md", "10_ai/attention.md", "10_ai/my note.md", "10_ai/my note.md"]
     note = s.docs["10_ai/my note.md"]
     assert "10_ai/attention.md" in note.links
     assert "11_research/orphan.md" in note.links  # [[Orphan]] resolved by title
@@ -70,3 +70,10 @@ def test_summary_timestamps_and_conflicts(vault: Path):
     wiki = s.docs["90_wiki/topics/transformers.md"]
     assert wiki.open_conflicts == ["#c-0001"]
     assert s.docs["90_wiki/SCHEMA.md"].type == "wiki-meta"
+
+
+def test_links_to_originals_are_valid_but_not_doc_links(vault: Path):
+    s = vt.scan(vault)
+    assert "10_ai/_originals/1706.03762.pdf" not in s.docs["10_ai/attention.md"].links
+    assert not any(t == "10_ai/_originals/1706.03762.pdf" for _, t in s.broken_links)
+    assert ("10_ai/attention.md", "10_ai/_originals/none.pdf") in s.broken_links
