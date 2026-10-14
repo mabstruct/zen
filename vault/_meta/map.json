@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-15T00:43:14+02:00",
+ "generated": "2026-10-15T00:45:59+02:00",
  "nodes": [
   {
    "id": "10_ai/1706.03762.md",
@@ -24,6 +24,45 @@
    "size": 2215244,
    "created": null,
    "updated": null,
+   "captured": null,
+   "ingested": null
+  },
+  {
+   "id": "90_wiki/INDEX.md",
+   "path": "90_wiki/INDEX.md",
+   "title": "Wiki index",
+   "type": "wiki-meta",
+   "cluster": "90_wiki",
+   "tags": [],
+   "size": 128,
+   "created": null,
+   "updated": "2026-10-15T00:45:25+02:00",
+   "captured": null,
+   "ingested": null
+  },
+  {
+   "id": "90_wiki/LOG.md",
+   "path": "90_wiki/LOG.md",
+   "title": "Wiki log",
+   "type": "wiki-meta",
+   "cluster": "90_wiki",
+   "tags": [],
+   "size": 107,
+   "created": null,
+   "updated": "2026-10-15T00:45:25+02:00",
+   "captured": null,
+   "ingested": null
+  },
+  {
+   "id": "90_wiki/SCHEMA.md",
+   "path": "90_wiki/SCHEMA.md",
+   "title": "Wiki schema — Claude's work instruction",
+   "type": "wiki-meta",
+   "cluster": "90_wiki",
+   "tags": [],
+   "size": 3457,
+   "created": null,
+   "updated": "2026-10-15T00:45:56+02:00",
    "captured": null,
    "ingested": null
   }
