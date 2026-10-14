@@ -1,18 +1,18 @@
 {
- "generated": "2026-10-15T00:53:07+02:00",
+ "generated": "2026-10-15T00:56:34+02:00",
  "nodes": [
   {
    "id": "10_ai/1706.03762.md",
    "path": "10_ai/1706.03762.md",
-   "title": "1706.03762",
+   "title": "Attention Is All You Need",
    "type": "companion",
    "cluster": "10_ai",
    "tags": [],
-   "size": 40091,
+   "size": 40818,
    "created": "2026-10-15T00:30:21+02:00",
-   "updated": "2026-10-15T00:30:21+02:00",
+   "updated": "2026-10-15T00:55:25+02:00",
    "captured": "2026-10-15T00:30:21+02:00",
-   "ingested": null
+   "ingested": "2026-10-15T00:55:25+02:00"
   },
   {
    "id": "10_ai/_originals/1706.03762.pdf",
@@ -34,9 +34,9 @@
    "type": "wiki-meta",
    "cluster": "90_wiki",
    "tags": [],
-   "size": 128,
+   "size": 544,
    "created": null,
-   "updated": "2026-10-15T00:45:25+02:00",
+   "updated": "2026-10-15T00:56:15+02:00",
    "captured": null,
    "ingested": null
   },
@@ -47,9 +47,9 @@
    "type": "wiki-meta",
    "cluster": "90_wiki",
    "tags": [],
-   "size": 107,
+   "size": 355,
    "created": null,
-   "updated": "2026-10-15T00:45:25+02:00",
+   "updated": "2026-10-15T00:56:11+02:00",
    "captured": null,
    "ingested": null
   },
@@ -65,6 +65,71 @@
    "updated": "2026-10-15T00:53:07+02:00",
    "captured": null,
    "ingested": null
+  },
+  {
+   "id": "90_wiki/entities/transformer.md",
+   "path": "90_wiki/entities/transformer.md",
+   "title": "Transformer",
+   "type": "wiki-entity",
+   "cluster": "90_wiki",
+   "tags": [],
+   "size": 978,
+   "created": "2026-10-15T00:55:25+02:00",
+   "updated": "2026-10-15T00:55:25+02:00",
+   "captured": null,
+   "ingested": null
+  },
+  {
+   "id": "90_wiki/sources/1706.03762.md",
+   "path": "90_wiki/sources/1706.03762.md",
+   "title": "Attention Is All You Need",
+   "type": "wiki-source",
+   "cluster": "90_wiki",
+   "tags": [],
+   "size": 2335,
+   "created": "2026-10-15T00:55:25+02:00",
+   "updated": "2026-10-15T00:55:25+02:00",
+   "captured": null,
+   "ingested": null
+  },
+  {
+   "id": "90_wiki/topics/attention-mechanism.md",
+   "path": "90_wiki/topics/attention-mechanism.md",
+   "title": "Attention mechanism",
+   "type": "wiki-topic",
+   "cluster": "90_wiki",
+   "tags": [],
+   "size": 1933,
+   "created": "2026-10-15T00:55:25+02:00",
+   "updated": "2026-10-15T00:55:25+02:00",
+   "captured": null,
+   "ingested": null
+  },
+  {
+   "id": "90_wiki/topics/multi-head-attention.md",
+   "path": "90_wiki/topics/multi-head-attention.md",
+   "title": "Multi-head attention",
+   "type": "wiki-topic",
+   "cluster": "90_wiki",
+   "tags": [],
+   "size": 2002,
+   "created": "2026-10-15T00:55:25+02:00",
+   "updated": "2026-10-15T00:55:25+02:00",
+   "captured": null,
+   "ingested": null
+  },
+  {
+   "id": "90_wiki/topics/transformer-architecture.md",
+   "path": "90_wiki/topics/transformer-architecture.md",
+   "title": "Transformer architecture",
+   "type": "wiki-topic",
+   "cluster": "90_wiki",
+   "tags": [],
+   "size": 1973,
+   "created": "2026-10-15T00:55:25+02:00",
+   "updated": "2026-10-15T00:55:25+02:00",
+   "captured": null,
+   "ingested": null
   }
  ],
  "edges": [
@@ -72,6 +137,286 @@
    "from": "10_ai/1706.03762.md",
    "to": "10_ai/_originals/1706.03762.pdf",
    "kind": "source"
+  },
+  {
+   "from": "90_wiki/INDEX.md",
+   "to": "90_wiki/entities/transformer.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/INDEX.md",
+   "to": "90_wiki/sources/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/INDEX.md",
+   "to": "90_wiki/topics/attention-mechanism.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/INDEX.md",
+   "to": "90_wiki/topics/multi-head-attention.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/INDEX.md",
+   "to": "90_wiki/topics/transformer-architecture.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/entities/transformer.md",
+   "to": "10_ai/1706.03762.md",
+   "kind": "wiki"
+  },
+  {
+   "from": "90_wiki/entities/transformer.md",
+   "to": "90_wiki/sources/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/entities/transformer.md",
+   "to": "90_wiki/sources/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/entities/transformer.md",
+   "to": "90_wiki/sources/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/entities/transformer.md",
+   "to": "90_wiki/sources/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/entities/transformer.md",
+   "to": "90_wiki/topics/attention-mechanism.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/entities/transformer.md",
+   "to": "90_wiki/topics/multi-head-attention.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/entities/transformer.md",
+   "to": "90_wiki/topics/transformer-architecture.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/sources/1706.03762.md",
+   "to": "10_ai/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/sources/1706.03762.md",
+   "to": "10_ai/1706.03762.md",
+   "kind": "wiki"
+  },
+  {
+   "from": "90_wiki/sources/1706.03762.md",
+   "to": "90_wiki/entities/transformer.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/sources/1706.03762.md",
+   "to": "90_wiki/topics/attention-mechanism.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/sources/1706.03762.md",
+   "to": "90_wiki/topics/multi-head-attention.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/sources/1706.03762.md",
+   "to": "90_wiki/topics/transformer-architecture.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/attention-mechanism.md",
+   "to": "10_ai/1706.03762.md",
+   "kind": "wiki"
+  },
+  {
+   "from": "90_wiki/topics/attention-mechanism.md",
+   "to": "90_wiki/entities/transformer.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/attention-mechanism.md",
+   "to": "90_wiki/entities/transformer.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/attention-mechanism.md",
+   "to": "90_wiki/sources/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/attention-mechanism.md",
+   "to": "90_wiki/sources/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/attention-mechanism.md",
+   "to": "90_wiki/sources/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/attention-mechanism.md",
+   "to": "90_wiki/sources/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/attention-mechanism.md",
+   "to": "90_wiki/sources/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/attention-mechanism.md",
+   "to": "90_wiki/sources/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/attention-mechanism.md",
+   "to": "90_wiki/sources/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/attention-mechanism.md",
+   "to": "90_wiki/topics/multi-head-attention.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/attention-mechanism.md",
+   "to": "90_wiki/topics/transformer-architecture.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/multi-head-attention.md",
+   "to": "10_ai/1706.03762.md",
+   "kind": "wiki"
+  },
+  {
+   "from": "90_wiki/topics/multi-head-attention.md",
+   "to": "90_wiki/entities/transformer.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/multi-head-attention.md",
+   "to": "90_wiki/sources/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/multi-head-attention.md",
+   "to": "90_wiki/sources/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/multi-head-attention.md",
+   "to": "90_wiki/sources/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/multi-head-attention.md",
+   "to": "90_wiki/sources/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/multi-head-attention.md",
+   "to": "90_wiki/sources/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/multi-head-attention.md",
+   "to": "90_wiki/sources/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/multi-head-attention.md",
+   "to": "90_wiki/topics/attention-mechanism.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/multi-head-attention.md",
+   "to": "90_wiki/topics/attention-mechanism.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/multi-head-attention.md",
+   "to": "90_wiki/topics/transformer-architecture.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/transformer-architecture.md",
+   "to": "10_ai/1706.03762.md",
+   "kind": "wiki"
+  },
+  {
+   "from": "90_wiki/topics/transformer-architecture.md",
+   "to": "90_wiki/entities/transformer.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/transformer-architecture.md",
+   "to": "90_wiki/entities/transformer.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/transformer-architecture.md",
+   "to": "90_wiki/sources/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/transformer-architecture.md",
+   "to": "90_wiki/sources/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/transformer-architecture.md",
+   "to": "90_wiki/sources/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/transformer-architecture.md",
+   "to": "90_wiki/sources/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/transformer-architecture.md",
+   "to": "90_wiki/sources/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/transformer-architecture.md",
+   "to": "90_wiki/sources/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/transformer-architecture.md",
+   "to": "90_wiki/sources/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/transformer-architecture.md",
+   "to": "90_wiki/sources/1706.03762.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/transformer-architecture.md",
+   "to": "90_wiki/topics/attention-mechanism.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/transformer-architecture.md",
+   "to": "90_wiki/topics/multi-head-attention.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/transformer-architecture.md",
+   "to": "90_wiki/topics/multi-head-attention.md",
+   "kind": "link"
   }
  ]
 }
