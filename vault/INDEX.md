@@ -1,6 +1,6 @@
 # ZEN Index
 
-Generated 2026-10-15T00:56:34+02:00 · 0 notes · 1 companions · 1 originals · 5 wiki pages · 0 open conflicts
+Generated 2026-10-15T00:59:38+02:00 · 0 notes · 1 companions · 1 originals · 5 wiki pages · 0 open conflicts
 
 Read this first. Open exactly the file you need. Regenerate with `zen-index`; never edit by hand.
 

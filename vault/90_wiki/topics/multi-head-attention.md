@@ -2,7 +2,7 @@
 title: Multi-head attention
 type: wiki-topic
 created: 2026-10-15T00:55:25+02:00
-updated: 2026-10-15T00:55:25+02:00
+updated: 2026-10-15T00:59:34+02:00
 sources: [10_ai/1706.03762.md]
 confidence: low
 tags: []
@@ -24,7 +24,7 @@ Multi-head attention runs several [attention](attention-mechanism.md) functions 
 
 ## Open questions
 
-- What number of heads is best beyond the 1–32 range tested on one translation task?
+- Head count was varied only from 1 to 32 at constant computation on English-German translation; quality dropped at both ends, so the best count for other tasks is untested. ([1706.03762](../sources/1706.03762.md))
 
 ## Related
 

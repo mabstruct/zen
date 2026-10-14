@@ -6,3 +6,7 @@ Append-only. Newest at the bottom. Conflict ids are allocated from the highest `
 - created: sources/1706.03762.md, topics/attention-mechanism.md, topics/multi-head-attention.md, topics/transformer-architecture.md, entities/transformer.md
 - updated: none
 - conflicts: none
+
+## 2026-10-15T00:59:34+02:00 fix
+- pages: topics/multi-head-attention.md
+- reason: open question lacked a source citation
