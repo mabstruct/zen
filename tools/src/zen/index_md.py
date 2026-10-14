@@ -13,8 +13,12 @@ def is_important(doc: Doc) -> bool:
     return bool(doc.summary) or doc.inbound >= INBOUND_THRESHOLD or "pinned" in doc.tags
 
 
+def _target(rel: str) -> str:
+    return f"<{rel}>" if " " in rel else rel
+
+
 def _line(doc: Doc) -> str:
-    parts = [f"- [{doc.title}]({doc.rel})"]
+    parts = [f"- [{doc.title}]({_target(doc.rel)})"]
     detail = [doc.summary] if doc.summary else []
     if doc.tags:
         detail.append(" ".join(doc.tags))
@@ -58,7 +62,7 @@ def render(scan: VaultScan, findings: list[Finding], now: datetime) -> str:
     for t in sorted(by_type):
         out.append(f"### {t}")
         for d in sorted(by_type[t], key=lambda d: d.rel):
-            out.append(f"- [{d.title}]({d.rel})")
+            out.append(f"- [{d.title}]({_target(d.rel)})")
         out.append("")
     if not by_type:
         out.append("No wiki pages yet. Run `/zen-ingest`.")

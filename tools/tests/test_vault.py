@@ -42,6 +42,7 @@ def test_links_resolve_relative_percent_encoded_and_wikilinks(vault: Path):
 def test_inbound_counts(vault: Path):
     s = vt.scan(vault)
     assert s.docs["10_ai/attention.md"].inbound == 2
+    assert s.docs["10_ai/my note.md"].inbound == 1
     assert s.docs["11_research/linker.md"].inbound == 0
 
 

@@ -188,10 +188,13 @@ def scan(root: Path) -> VaultScan:
                 broken.append((rel, name))
     for d in docs.values():
         kept: list[str] = []
+        counted: set[str] = set()
         for target in d.links:
             if target in docs:
                 kept.append(target)
-                docs[target].inbound += 1
+                if target not in counted:
+                    counted.add(target)
+                    docs[target].inbound += 1
             elif (root / target).exists():
                 continue
             else:

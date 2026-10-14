@@ -27,7 +27,6 @@ def test_cluster_sections_list_only_important_newest_first(vault: Path):
     lines = [l for l in ai.splitlines() if l.startswith("- [")]
     assert lines == [
         "- [Pinned](10_ai/pinned.md) — pinned · updated 2026-10-09",
-        "- [Notes on attention](10_ai/my note.md) — ai · updated 2026-10-05",
         "- [Attention Is All You Need](10_ai/attention.md) — The transformer paper. · transformers · updated 2026-10-01",
     ]
 
@@ -46,10 +45,18 @@ def test_wiki_and_health_sections(vault: Path):
     assert "## Wiki\n\n### wiki-topic\n- [Transformers](90_wiki/topics/transformers.md)" in out
     health_section = out.split("## Health")[1]
     assert "### open-conflict\n- 90_wiki/topics/transformers.md — #c-0001" in health_section
-    assert "### broken-link\n" in health_section
-    assert "- 10_ai/my note.md — 10_ai/nope.md" in health_section
+    block = health_section.split("### broken-link\n")[1].split("\n\n")[0].splitlines()
+    assert "- 10_ai/my note.md — 10_ai/nope.md" in block
+    assert "- 10_ai/attention.md — 10_ai/_originals/none.pdf" in block
+    assert block.index("- 10_ai/attention.md — 10_ai/_originals/none.pdf") < block.index("- 10_ai/my note.md — 10_ai/nope.md")
     assert "### wiki-behind\n- 10_ai/my note.md" in health_section
 
 
 def test_render_is_deterministic(vault: Path):
     assert render(vault) == render(vault)
+
+
+def test_space_in_path_uses_angle_brackets(vault: Path):
+    write(vault / "10_ai" / "with space.md", "---\ntitle: T\ntype: note\nupdated: 2026-10-09T00:00:00+02:00\ntags: [pinned]\n---\nx\n")
+    out = render(vault)
+    assert "- [T](<10_ai/with space.md>) — pinned · updated 2026-10-09" in out
