@@ -1,5 +1,38 @@
 {
- "generated": "2026-10-15T00:11:30+02:00",
- "nodes": [],
- "edges": []
+ "generated": "2026-10-15T00:15:11+02:00",
+ "nodes": [
+  {
+   "id": "10_ai/1706.03762.md",
+   "path": "10_ai/1706.03762.md",
+   "title": "1706.03762",
+   "type": "companion",
+   "cluster": "10_ai",
+   "tags": [],
+   "size": 40726,
+   "created": "2026-10-15T00:15:08+02:00",
+   "updated": "2026-10-15T00:15:08+02:00",
+   "captured": "2026-10-15T00:15:08+02:00",
+   "ingested": null
+  },
+  {
+   "id": "10_ai/_originals/1706.03762.pdf",
+   "path": "10_ai/_originals/1706.03762.pdf",
+   "title": "1706.03762.pdf",
+   "type": "original",
+   "cluster": "10_ai",
+   "tags": [],
+   "size": 2215244,
+   "created": null,
+   "updated": null,
+   "captured": null,
+   "ingested": null
+  }
+ ],
+ "edges": [
+  {
+   "from": "10_ai/1706.03762.md",
+   "to": "10_ai/_originals/1706.03762.pdf",
+   "kind": "source"
+  }
+ ]
 }
