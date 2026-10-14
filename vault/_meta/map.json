@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-15T00:45:59+02:00",
+ "generated": "2026-10-15T00:49:36+02:00",
  "nodes": [
   {
    "id": "10_ai/1706.03762.md",
@@ -60,9 +60,9 @@
    "type": "wiki-meta",
    "cluster": "90_wiki",
    "tags": [],
-   "size": 3457,
+   "size": 5244,
    "created": null,
-   "updated": "2026-10-15T00:45:56+02:00",
+   "updated": "2026-10-15T00:49:32+02:00",
    "captured": null,
    "ingested": null
   }
