@@ -4,7 +4,7 @@ ZEN is a personal knowledge system. `vault/` is the only truth: markdown notes, 
 
 ## Brain-First ladder — every knowledge question, in this order
 
-Before step 1, run `cd tools && uv run zen-index --check --vault ../vault`; if it exits 1, run `uv run zen-index --vault ../vault` first.
+Before step 1, run `cd tools && uv run zen-index --check --vault ../vault`; if it exits 1, run `cd tools && uv run zen-index --vault ../vault` first.
 
 1. Read `vault/INDEX.md`. If the source is listed, open exactly that file.
 2. Check the wiki via `vault/90_wiki/INDEX.md`. Prefer a wiki page over raw sources; the knowledge may already be condensed.

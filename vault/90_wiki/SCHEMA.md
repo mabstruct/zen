@@ -11,7 +11,7 @@ Read this before every wiki operation. Humans never edit this folder; only `/zen
 | wiki-entity | entities/ | person, project, tool, organisation | what it is, why it matters here, links to topics and sources |
 | wiki-synthesis | syntheses/ | theme where ≥ 3 sources converge | argument across topics; written only when the threshold is met |
 
-Filenames: a `sources/` page is named after the input's vault filename stem, e.g. input `10_ai/1706.03762.md` → `sources/1706.03762.md`. `topics/`, `entities/` and `syntheses/` pages use the slug of their own title (§4 slug rules: lowercase ASCII, hyphens), e.g. `topics/attention-mechanism.md`.
+Filenames: a `sources/` page is named after the input's vault filename stem, e.g. input `10_ai/1706.03762.md` → `sources/1706.03762.md`. If `sources/<stem>.md` already exists and its `sources:` names a different input, use `sources/<stem>-<cluster>.md` (e.g. `notes-11_research.md`). `topics/`, `entities/` and `syntheses/` pages use the slug of their own title: lowercase ASCII (strip diacritics), words joined by single hyphens, no other punctuation, at most 80 characters, e.g. `topics/attention-mechanism.md`.
 
 Frontmatter (`tags` optional):
 
@@ -23,6 +23,20 @@ created: 2026-10-15T09:10:00+02:00
 updated: 2026-10-15T09:10:00+02:00
 sources: [10_ai/1706.03762.md]
 confidence: medium   # low = 1 source, medium = 2–3 agreeing, high = ≥ 4 agreeing
+tags: []
+---
+```
+
+A `wiki-source` page: `title` is the input's title, `sources` names exactly one path (the input), and `confidence` is always `high`, because a source page states what the source says, not whether it is true:
+
+```yaml
+---
+title: Attention Is All You Need
+type: wiki-source
+created: 2026-10-15T09:10:00+02:00
+updated: 2026-10-15T09:10:00+02:00
+sources: [10_ai/1706.03762.md]
+confidence: high
 tags: []
 ---
 ```
@@ -45,13 +59,13 @@ Links are always relative to the page that contains them.
 4. Write or update: its `sources/` page; affected `topics/` and `entities/`; links in both directions (relative markdown links); a `syntheses/` page if ≥ 3 sources now converge.
 5. For every claim you write, check the target page for an existing statement it contradicts. If so: add the new claim (B) to the page like any other claim (on topics: in Claims), with its own source link, so both claims stay readable there; and add a conflict block (below) with the earlier claim as A and the new one as B. **Never delete or rewrite the earlier statement.**
 6. If the input's `## Summary` is empty, write 3–6 lines there. If the input is a companion whose `title` is a bare identifier (an arXiv id, a filename stem), set `title` and the `# ` heading to the document's real title from its text. Set `ingested` and `updated` on the input to the same ISO 8601 timestamp with offset (one value, used for both).
-7. Append a run entry to `LOG.md`. Update `INDEX.md`: one line per page, under the heading of its type — a list item holding a markdown link to the page (title as link text, path relative to this folder), then ` · <type> · <updated as YYYY-MM-DD>`. Example:
+7. Append a run entry to `LOG.md`. Update `INDEX.md`: one line per page, under the heading of its type — a list item holding a markdown link to the page (the page's `title` as link text, path relative to this folder), then ` · <type> · <updated as YYYY-MM-DD>`. Lines under each type heading are sorted by title, case-insensitively. Example:
 
 ```markdown
 - [Attention mechanism](topics/attention-mechanism.md) · wiki-topic · 2026-10-15
 ```
 
-**Re-ingest.** When the input already has a `sources/` page (the wiki-behind queue), rewrite that source page from the current text and update every claim attributed to it on other pages to the new wording. A source never conflicts with its own earlier version; only disagreement with a different source is marked. The LOG entry says `re-ingest`.
+**Re-ingest.** When the input already has a `sources/` page (the wiki-behind queue), rewrite that source page from the current text and update every claim attributed to it on other pages to the new wording. A source never conflicts with its own earlier version; only disagreement with a different source is marked. A claim that is quoted as A or B in an open conflict block is never altered; instead append one line to the block: `> Note: A's source re-ingested on YYYY-MM-DD; see the Claims list for its current wording.` The Claims-list entry is updated as usual. The LOG entry says `re-ingest`.
 
 ## Conflict block
 
