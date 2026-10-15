@@ -32,8 +32,8 @@ def extract(path: Path) -> Extraction:
         result = MarkItDown(enable_plugins=False).convert(str(path))
         text = (result.markdown or "").strip()
         if not text:
-            return Extraction("failed", "", result.title, "empty extraction")
-        return Extraction("ok", text + "\n", result.title or None)
+            return Extraction("failed", "", str(result.title) if result.title else None, "empty extraction")
+        return Extraction("ok", text + "\n", str(result.title).strip() if result.title else None)
     except Exception as e:  # third-party boundary: every failure becomes a flagged companion
         return Extraction("failed", "", None, f"{type(e).__name__}: {e}")
 

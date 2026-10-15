@@ -55,3 +55,10 @@ def test_pdf_title_from_metadata_or_none(tmp_path: Path):
     p = tmp_path / "t.pdf"
     p.write_bytes(make_pdf("Hello ZEN"))
     assert ex.extract(p).title is None
+
+
+def test_html_title_is_a_plain_str(tmp_path: Path):
+    p = tmp_path / "t.html"
+    p.write_text("<html><head><title>Page T</title></head><body><p>x</p></body></html>", encoding="utf-8")
+    r = ex.extract(p)
+    assert type(r.title) is str and r.title == "Page T"
