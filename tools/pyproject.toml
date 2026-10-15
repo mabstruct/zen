@@ -12,6 +12,7 @@ dependencies = [
 [project.scripts]
 zen-index = "zen.index_cli:main"
 zen-intake = "zen.intake_cli:main"
+zen-ask-prep = "zen.ask_prep:main"
 
 [dependency-groups]
 dev = ["pytest>=8", "python-docx>=1.1"]

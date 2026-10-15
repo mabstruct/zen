@@ -145,6 +145,8 @@ Brain-First ladder, applied on every knowledge question:
 4. Open exactly ONE file — the best — and read only the relevant section. In a companion, read `## Summary` first; `## Extracted text` only if the summary does not answer.
 5. Answer, citing file paths. Never scan folders. Never open originals.
 
+`zen-ask-prep "<question>"` (v1.1) performs steps 0–3 in one deterministic call — stale check with re-index, `INDEX.md` without its Health section, wiki `INDEX.md`, top qmd hits with snippets — so a question costs three model calls (prep, one file, answer) instead of six. The ladder's order and the one-file rule are unchanged; qmd failure degrades to the first two rungs with a one-line notice.
+
 Further rules: never hand-edit `90_wiki/`, `INDEX.md`, `_meta/`; after writing to the vault run `zen-index` and qmd re-index; if `zen-index --check` fails, re-index before answering; wiki work only through `/zen-ingest`; the human decides every conflict.
 
 **Known extension (not v1):** let step 3 return qmd chunk snippets instead of file-level hits for long PDFs.

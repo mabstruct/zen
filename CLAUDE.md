@@ -4,7 +4,7 @@ ZEN is a personal knowledge system. `vault/` is the only truth: markdown notes, 
 
 ## Brain-First ladder — every knowledge question, in this order
 
-Before step 1, run `(cd tools && uv run zen-index --check --vault ../vault)`; if it exits 1, run `(cd tools && uv run zen-index --vault ../vault)` first.
+`(cd tools && uv run zen-ask-prep --vault ../vault "<question>")` performs steps 0–3 below in one call (stale check and re-index, both index files, qmd hits with snippets); use it instead of running them separately — the rules are unchanged, only the number of round trips. Without it, before step 1 run `(cd tools && uv run zen-index --check --vault ../vault)`; if it exits 1, run `(cd tools && uv run zen-index --vault ../vault)` first.
 
 1. Read `vault/INDEX.md`. If the source is listed, open exactly that file. If both a wiki page and a raw file are listed for the answer, open the wiki page.
 2. Check the wiki via `vault/90_wiki/INDEX.md`. Prefer a wiki page over raw sources; the knowledge may already be condensed.
