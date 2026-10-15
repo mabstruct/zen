@@ -47,7 +47,7 @@ In a Claude Code session rooted in `zen/`:
 - `/zen-ask` answers a question from the vault, wiki first — three model calls: `zen-ask-prep` (indexes + search hits in one call), one file, the answer.
 - `/zen-ingest` condenses new or changed sources into the wiki and marks conflicts; routes each file to the standard or deep ingester agent (model baseline in `CLAUDE.md`).
 - `/zen-index` regenerates the index and shows vault health.
-- `/zen-move` re-files a note or companion into another cluster and rewrites every reference to it.
+- `/zen-move` re-files a note or companion into another cluster, or renames a whole cluster, and rewrites every reference.
 
 Brain-First ladder: Claude reads `vault/INDEX.md` first, then the wiki, then runs qmd search, then opens exactly one file — never scanning folders and never opening `_originals/`.
 

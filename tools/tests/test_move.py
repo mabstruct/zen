@@ -91,3 +91,65 @@ def test_main_entry(vault: Path, capsys):
     assert move.main(["10_ai/attention.md", "--cluster", "11_research", "--vault", str(vault)]) == 0
     assert "moved" in capsys.readouterr().out
     assert move.main(["10_ai/attention.md", "--cluster", "11_research", "--vault", str(vault)]) == 1
+
+
+def test_rename_cluster_moves_folder_and_rewrites_outside_refs(vault: Path):
+    r = move.rename_cluster(vault, "10_ai", "16_ml", now=NOW)
+    assert r.status == "moved" and r.new_path == "16_ml"
+    assert not (vault / "10_ai").exists()
+    assert (vault / "16_ml" / "attention.md").exists()
+    assert (vault / "16_ml" / "_originals" / "1706.03762.pdf").exists()
+    assert read(vault / "16_ml" / "_cluster.md").startswith("AI research")
+    assert "[the paper](attention.md)" in read(vault / "16_ml" / "my note.md")  # intra-cluster link untouched
+    linker = read(vault / "11_research" / "linker.md")
+    assert "[paper](../16_ml/attention.md)" in linker
+    assert "[note](../16_ml/my%20note.md)" in linker
+    assert "10_ai" not in linker
+    page = fm.read(vault / "90_wiki" / "topics" / "transformers.md")
+    assert page.meta["sources"] == ["16_ml/attention.md"]
+    assert page.meta["updated"] == "2026-10-03T09:00:00+02:00"
+    assert f"## {NOW} move 10_ai → 16_ml" in read(vault / "90_wiki" / "LOG.md")
+
+
+def test_rename_cluster_keeps_links_resolving(vault: Path):
+    before = len(vt.scan(vault).broken_links)
+    move.rename_cluster(vault, "10_ai", "16_ml", now=NOW)
+    s = vt.scan(vault)
+    assert len(s.broken_links) == before
+    assert s.docs["11_research/linker.md"].links.count("16_ml/my note.md") == 3
+    assert s.docs["16_ml/attention.md"].inbound == 2
+    assert [c.name for c in s.clusters] == ["11_research", "16_ml"]
+    assert "## 16_ml" in read(vault / "INDEX.md")
+
+
+def test_rename_cluster_refusals_touch_nothing(vault: Path):
+    snapshot = sorted(p.relative_to(vault).as_posix() for p in vault.rglob("*") if p.is_file())
+    assert move.rename_cluster(vault, "10_ai", "11_research", now=NOW).status == "refused"  # target exists
+    assert move.rename_cluster(vault, "10_ai", "ml", now=NOW).status == "refused"  # bad name
+    assert move.rename_cluster(vault, "19_none", "16_ml", now=NOW).status == "refused"  # no source
+    assert move.rename_cluster(vault, "00_inbox", "16_in", now=NOW).status == "refused"  # not a cluster
+    assert snapshot == sorted(p.relative_to(vault).as_posix() for p in vault.rglob("*") if p.is_file())
+
+
+def test_rename_cluster_dry_run(vault: Path, capsys):
+    snapshot = sorted(p.relative_to(vault).as_posix() for p in vault.rglob("*") if p.is_file())
+    assert move.rename_cluster(vault, "10_ai", "16_ml", now=NOW, dry_run=True).status == "planned"
+    out = capsys.readouterr().out
+    assert "rename 10_ai → 16_ml" in out and "11_research/linker.md" in out and "transformers.md" in out
+    assert snapshot == sorted(p.relative_to(vault).as_posix() for p in vault.rglob("*") if p.is_file())
+
+
+def test_main_rename_cluster(vault: Path, capsys):
+    assert move.main(["--rename-cluster", "10_ai", "16_ml", "--vault", str(vault)]) == 0
+    assert "renamed 10_ai → 16_ml" in capsys.readouterr().out
+
+
+def test_rename_cluster_leaves_log_history_untouched(vault: Path, capsys):
+    log = vault / "90_wiki" / "LOG.md"
+    log.write_text("# Log\n\n## 2026-10-01T10:00:00+02:00 ingest 10_ai/attention.md\n- created: sources/attention.md\n", encoding="utf-8")
+    move.rename_cluster(vault, "10_ai", "16_ml", now=NOW, dry_run=True)
+    assert "LOG.md" not in capsys.readouterr().out
+    move.rename_cluster(vault, "10_ai", "16_ml", now=NOW)
+    text = read(log)
+    assert "ingest 10_ai/attention.md\n- created: sources/attention.md" in text
+    assert text.rstrip().endswith("- cluster renamed; rewritten: 11_research/linker.md, 90_wiki/topics/transformers.md")

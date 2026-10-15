@@ -35,11 +35,12 @@ def _rel(from_dir: str, to: str) -> str:
     return posixpath.relpath(to, from_dir or ".")
 
 
-def _rewrite_links(body: str, from_dir_old: str, from_dir_new: str, mapping: dict[str, str]) -> str:
+def _rewrite_links(body: str, from_dir_old: str, from_dir_new: str, mapping) -> str:
     """Rewrite markdown link targets in body (outside code fences).
 
-    A link is rewritten when the path it resolves to (from from_dir_old) is a key in mapping,
-    or when from_dir_new differs from from_dir_old (the containing doc moved)."""
+    `mapping` is a dict of old→new vault paths or a callable remapping a path. A link is
+    rewritten when its resolved path is remapped or the containing doc moved."""
+    remap = (lambda p: mapping.get(p, p)) if isinstance(mapping, dict) else mapping
 
     def sub(m: re.Match) -> str:
         angle, bare = m.group(1), m.group(2)
@@ -56,7 +57,7 @@ def _rewrite_links(body: str, from_dir_old: str, from_dir_new: str, mapping: dic
         path, _, frag = target.partition("#")
         decoded = unquote(path)
         resolved = _norm(from_dir_old, decoded)
-        new_target = mapping.get(resolved, resolved)
+        new_target = remap(resolved)
         if new_target == resolved and from_dir_new == from_dir_old:
             return m.group(0)
         new_rel = _rel(from_dir_new, new_target)
@@ -206,13 +207,90 @@ def run(vault: Path, rel: str, cluster: str, *, now: str | None = None, dry_run:
     return MoveResult("moved", new_path=new_rel, rewritten=touched)
 
 
+def rename_cluster(vault: Path, old: str, new: str, *, now: str | None = None, dry_run: bool = False) -> MoveResult:
+    vault = vault.resolve()
+    now = now or fm.now_iso()
+    if not CLUSTER_NAME_RE.fullmatch(old) or not (vault / old).is_dir():
+        return MoveResult("refused", note=f"unknown cluster: {old}")
+    if not CLUSTER_NAME_RE.fullmatch(new):
+        return MoveResult("refused", note=f"not a cluster name (1x_<name>): {new}")
+    if (vault / new).exists():
+        return MoveResult("refused", note=f"{new} already exists")
+
+    prefix = old + "/"
+
+    def remap(p: str) -> str:
+        return new + "/" + p[len(prefix):] if p.startswith(prefix) else p
+
+    s = scan(vault)
+    touched = sorted(
+        d.rel for d in s.docs.values()
+        if not d.rel.startswith(prefix)
+        and d.rel != "90_wiki/LOG.md"  # history keeps the old paths
+        and (prefix in (vault / d.rel).read_text(encoding="utf-8"))
+    )
+
+    if dry_run:
+        print(f"rename {old} → {new}")
+        for t in touched:
+            print(f"rewrite {t}")
+        return MoveResult("planned", new_path=new, rewritten=touched)
+
+    broken_before = len(s.broken_links)
+    backups: dict[Path, str] = {}
+    renamed = False
+    try:
+        (vault / old).rename(vault / new)
+        renamed = True
+        for t in touched:
+            p = vault / t
+            text = p.read_text(encoding="utf-8")
+            head, body = _split(text)
+            head = re.sub(rf"(?<![\w/.-]){re.escape(prefix)}", new + "/", head)
+            t_dir = posixpath.dirname(t)
+            new_text = head + _rewrite_links(body, t_dir, t_dir, remap)
+            if new_text != text:
+                backups[p] = text
+                p.write_text(new_text, encoding="utf-8")
+        log = vault / "90_wiki" / "LOG.md"
+        if log.exists():
+            backups[log] = log.read_text(encoding="utf-8")
+            entry = f"\n## {now} move {old} → {new}\n- cluster renamed; rewritten: {', '.join(touched) if touched else 'none'}\n"
+            log.write_text(backups[log].rstrip("\n") + "\n" + entry, encoding="utf-8")
+        if len(scan(vault).broken_links) > broken_before:
+            raise RuntimeError("rename would add broken links")
+    except Exception as e:
+        for p, content in backups.items():
+            p.write_text(content, encoding="utf-8")
+        if renamed:
+            (vault / new).rename(vault / old)
+        return MoveResult("refused", note=f"rolled back: {type(e).__name__}: {e}")
+
+    with contextlib.redirect_stdout(io.StringIO()):
+        index_cli.run(vault)
+    return MoveResult("moved", new_path=new, rewritten=touched)
+
+
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(prog="zen-move", description="Move a note or companion (and its original) to another cluster, rewriting every reference. No AI.")
-    ap.add_argument("path", help="vault-relative path, e.g. 15_era/sample-seventh.md")
-    ap.add_argument("--cluster", required=True, help="target cluster folder, e.g. 15_cosmology")
+    ap = argparse.ArgumentParser(prog="zen-move", description="Move a note or companion (and its original) to another cluster, or rename a whole cluster, rewriting every reference. No AI.")
+    ap.add_argument("path", nargs="?", help="vault-relative path, e.g. 15_era/sample-seventh.md")
+    ap.add_argument("--cluster", help="target cluster folder, e.g. 15_cosmology")
+    ap.add_argument("--rename-cluster", nargs=2, metavar=("OLD", "NEW"), help="rename a whole cluster folder")
     ap.add_argument("--vault", type=Path, default=Path("vault"))
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args(argv)
+    if a.rename_cluster:
+        if a.path or a.cluster:
+            ap.error("--rename-cluster takes no path and no --cluster")
+        old, new = a.rename_cluster
+        r = rename_cluster(a.vault, old, new, dry_run=a.dry_run)
+        if r.status == "moved":
+            print(f"renamed {old} → {new}; rewrote {len(r.rewritten)} file(s): {', '.join(r.rewritten) or 'none'}")
+        elif r.status == "refused":
+            print(f"refused: {r.note}")
+        return 0 if r.status in ("moved", "planned") else 1
+    if not a.path or not a.cluster:
+        ap.error("give a path and --cluster, or --rename-cluster OLD NEW")
     r = run(a.vault, a.path, a.cluster, dry_run=a.dry_run)
     if r.status == "moved":
         print(f"moved {a.path} → {r.new_path}; rewrote {len(r.rewritten)} file(s): {', '.join(r.rewritten) or 'none'}")
