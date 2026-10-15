@@ -27,7 +27,9 @@ class Report:
     items: list[ItemResult] = field(default_factory=list)
 
     def summary(self) -> str:
-        counts = {s: sum(1 for i in self.items if i.status == s) for s in ("filed", "inbox", "duplicate", "failed")}
+        statuses = ["filed", "inbox", "duplicate", "failed"]
+        statuses += [s for s in dict.fromkeys(i.status for i in self.items) if s not in statuses]
+        counts = {s: sum(1 for i in self.items if i.status == s) for s in statuses}
         lines = [", ".join(f"{k}: {v}" for k, v in counts.items())]
         for i in self.items:
             where = i.companion or "-"

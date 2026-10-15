@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from . import index_cli, intake
+from . import index_cli, intake, refresh
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -12,9 +12,18 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--cluster", help="target cluster folder, e.g. 10_ai")
     ap.add_argument("--vault", type=Path, default=Path("vault"))
     ap.add_argument("--no-index", action="store_true")
+    mode = ap.add_mutually_exclusive_group()
+    mode.add_argument("--retry-missing", action="store_true", help="re-fetch every companion with snapshot: missing")
+    mode.add_argument("--recapture", metavar="VAULT_PATH", help="re-fetch one companion's source.url and replace its snapshot if it changed")
     a = ap.parse_args(argv)
 
-    if a.specs:
+    if (a.retry_missing or a.recapture) and (a.specs or a.cluster):
+        ap.error("--retry-missing/--recapture take no specs and no --cluster")
+    if a.retry_missing:
+        report = refresh.retry_missing(a.vault)
+    elif a.recapture:
+        report = intake.Report([refresh.recapture(a.vault, a.recapture)])
+    elif a.specs:
         specs: list[str] = []
         for s in a.specs:
             p = Path(s)

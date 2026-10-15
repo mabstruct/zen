@@ -251,14 +251,14 @@ Known deviations from this spec in v1:
 - An explicit `.md` path given to intake from outside the inbox is treated as an original with a companion rather than filed as a note.
 - `zen-intake vault/00_inbox` as a folder spec runs the file path, not inbox mode; use `zen-intake` with no arguments.
 - arXiv companions are titled by their id when the PDF carries no metadata title; `/zen-ingest` sets the real title on first ingest.
-- A URL whose fetch failed is reported `duplicate` on re-run (against its `snapshot: missing` companion) until that companion is deleted.
+- A URL whose fetch failed is reported `duplicate` on re-run (against its `snapshot: missing` companion); use `zen-intake --retry-missing`.
 - Deleting or renaming a vault file does not mark the index stale (`--check` compares file mtimes only).
 
 Planned additions:
 
 - **Done in v1.1: `zen-move <vault-path> --cluster <id>`, and `zen-move --rename-cluster <old> <new>` for a whole cluster** (`tools/src/zen/move.py`, `/zen-move` skill) — re-cluster a document after a wrong filing decision. Deterministic, one atomic step: `git mv` the companion and its original together (`source.local` stays valid because it is cluster-relative); rewrite every inbound link in the vault (the scanner already knows them); patch the wiki source page's `sources:` entry and its back-link (and rename `sources/<stem>-<cluster>.md` if the collision rule had applied); regenerate the index; refresh qmd. Refuses if the target cluster does not exist or the move would leave a broken link. Does **not** bump `updated` (a move is not a content change and must not enter the wiki-behind queue); logs a `move` entry in `LOG.md`. This is the one tool other than `/zen-ingest` allowed to write under `90_wiki/`, limited to path rewrites — §7 and `SCHEMA.md` need that exception stated.
-- `zen-intake --retry-missing` — re-fetch companions flagged `snapshot: missing` in place instead of reporting `duplicate`.
-- `zen-intake --recapture <path>` — deliberate re-capture of a changed web page as a new `captured` date on the same companion.
+- **Done in v1.1:** `zen-intake --retry-missing` — re-fetch companions flagged `snapshot: missing` in place instead of reporting `duplicate`.
+- **Done in v1.1:** `zen-intake --recapture <path>` (snapshot replaced in place, earlier version kept by the workspace git history, Summary cleared so re-ingest rewrites it) — deliberate re-capture of a changed web page as a new `captured` date on the same companion.
 - arXiv title lookup via the arXiv API at intake (one extra fetch) so companions never carry a bare id as title.
 - `/zen-ask` may read qmd chunk snippets instead of file-level hits for long PDFs (noted in §7).
 - **Model selection per task.** v1 names no model anywhere: `/zen-ingest`'s per-file subagent inherits the session model, and the session model is whatever the user last picked. Two places spend tokens and they have different needs:
