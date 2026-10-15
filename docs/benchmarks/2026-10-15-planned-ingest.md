@@ -8,8 +8,8 @@ Does splitting ingest into one planner and parallel page writers cut wall time?
 
 - **Input:** `10_ai/2025-05-12-o3-categories-of-llm-training-v02.md`, 79 KB of extracted text (an o3-written overview of LLM training).
 - **Baseline:** the first ingest of the same document on the single-agent path with the deep ingester. It took about 14 minutes and wrote 34 pages (29 new, 5 updated), about 10,600 words.
-- **This run:** workspace branch `measure-parallel`, rolled back to the state before that ingest (29 pages removed, 5 restored, LOG entry and companion stamp removed). `/zen-ingest` in a fresh session on `zen` branch `parallel-ingest`. Routing chose the deep model and the planned path, because 79 KB is above both the 50 KB and the 20 KB thresholds.
-- **Plan format:** every claim written in final form, with its citation, inside the plan. Writers only transcribed.
+- **Run 1:** workspace branch `measure-parallel`, rolled back to the state before that ingest (29 pages removed, 5 restored, LOG entry and companion stamp removed). `/zen-ingest` in a fresh session on `zen` branch `parallel-ingest`. Routing chose the deep model and the planned path, because 79 KB is above both the 50 KB and the 20 KB thresholds.
+- **Run 1 plan format:** every claim written in final form, with its citation, inside the plan. Writers only transcribed.
 
 ## Result
 
