@@ -1,6 +1,6 @@
 # Reference document
 
-`vault/15_era/sample-seventh.md` — Chapter 7, "Seventh rung: the Milky Way", from a book on the cosmic distance ladder. Original: `vault/15_era/_originals/sample-seventh.pdf` (42 pages, 59.5 MB, image-heavy). Extracted text: 128 KB, 20.8k words, ~1,900 lines, ~30k tokens; negligible extraction noise.
+`vault/15_cosmology/sample-seventh.md` — Chapter 7, "Seventh rung: the Milky Way", from a book on the cosmic distance ladder. Original: `vault/15_cosmology/_originals/sample-seventh.pdf` (42 pages, 59.5 MB, image-heavy). Extracted text: 128 KB, 20.8k words, ~1,900 lines, ~30k tokens; negligible extraction noise.
 
 Use it as the fixed input for every ingest comparison and timing measurement, so results stay comparable across models, SCHEMA changes and skill changes.
 

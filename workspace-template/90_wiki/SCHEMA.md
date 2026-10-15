@@ -107,3 +107,10 @@ The heading word is `ingest`, or `re-ingest` for a re-ingest.
 ## 2026-10-15T09:20:00+02:00 fix topics/attention-mechanism.md
 - added missing citation to the second claim
 ```
+
+`## <timestamp> move <old path> → <new path>` — a vault file or cluster was moved; only `sources:` entries and back-links were rewritten, no claim changed. Earlier log entries keep the old path; they are history.
+
+```markdown
+## 2026-10-15T14:00:00+02:00 move 15_cosmology → 15_cosmology
+- cluster renamed; pages: sources/sample-seventh.md and every page citing it — paths rewritten, claims untouched
+```

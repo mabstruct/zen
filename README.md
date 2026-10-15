@@ -10,7 +10,8 @@ ZEN is a personal knowledge system built around one question: how do I keep note
 zen/
 ├── CLAUDE.md          Brain-First rulebook for Claude
 ├── .claude/skills/    the five Claude Code skills
-├── vault/
+├── workspace-template/  seed for a new workspace: templates, wiki SCHEMA, starter clusters
+├── vault/             YOUR WORKSPACE — a separate (private) git repo, not tracked here
 │   ├── 00_inbox/      drop zone for unfiled items
 │   ├── 1x_*/          clusters: notes, companions, and _originals/ (the source files)
 │   ├── 90_wiki/       Claude-maintained wiki (SCHEMA.md, LOG.md, INDEX.md, pages)
@@ -27,11 +28,15 @@ Prerequisites: macOS, `uv`, Node >= 20 with npm.
 
 ```
 (cd tools && uv sync)
+./scripts/ws-init.sh https://github.com/<you>/<your-workspace>.git   # or no argument: scaffold an empty one
 ./scripts/qmd-setup.sh
-(cd tools && uv run zen-index --vault ../vault)
 ```
 
-`qmd-setup.sh` installs `@tobilu/qmd` globally and downloads about 2 GB of models, so the first run takes about 10 minutes.
+`ws-init.sh` puts your workspace at `vault/` — either by cloning your workspace repo or by scaffolding a fresh one from `workspace-template/` — and builds the first index. `qmd-setup.sh` installs `@tobilu/qmd` globally and downloads about 2 GB of models, so the first run takes about 10 minutes.
+
+## Workspace vs. system
+
+This repo is the **system**: tools, rulebook, skills, docs, and the workspace template. It holds no knowledge. Your **workspace** — notes, originals, the wiki — lives in `vault/`, which is its own git repo (keep it private: it will contain your documents and the full text of what you ingest). `vault/` is git-ignored here. The wiki's rules (`90_wiki/SCHEMA.md`) are seeded from the template; when the template's SCHEMA changes, copy it into your workspace.
 
 ## Daily use
 

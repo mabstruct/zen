@@ -2,7 +2,7 @@
 
 Purpose: prove the wiki marks contradictions instead of overwriting, and merges harmless confirmations (spec §11).
 
-Reference document: `vault/15_era/sample-seventh.md` (Chapter 7, "Seventh rung: the Milky Way"), ingested 2026-10-15 by Fable 5.1 into one source page, eight topics and fifteen entities. The independent review in [2026-10-15-ingest-model-comparison.md](../benchmarks/2026-10-15-ingest-model-comparison.md) found three factual slips in that ingest. This test plants the **correct** facts, so the three conflicts it raises are real and `--resolve` performs a genuine correction.
+Reference document: `vault/15_cosmology/sample-seventh.md` (Chapter 7, "Seventh rung: the Milky Way"), ingested 2026-10-15 by Fable 5.1 into one source page, eight topics and fifteen entities. The independent review in [2026-10-15-ingest-model-comparison.md](../benchmarks/2026-10-15-ingest-model-comparison.md) found three factual slips in that ingest. This test plants the **correct** facts, so the three conflicts it raises are real and `--resolve` performs a genuine correction.
 
 Precondition: met — the pages below exist.
 
@@ -23,7 +23,7 @@ Precondition: met — the pages below exist.
    ---
    title: Trust test note
    type: note
-   cluster: 15_era
+   cluster: 15_cosmology
    tags: [trust-test]
    ---
 
@@ -35,7 +35,7 @@ Precondition: met — the pages below exist.
 
    Bullet N contradicts claim N; bullet 4 restates row 4.
 
-3. Run `/zen-intake` with no arguments (inbox mode; the note's `cluster:` key files it — the skill will not ask for a cluster). Expected: it reports `filed` and the note is now at `vault/15_era/trust-test.md`. Then `/zen-ingest 15_era/trust-test.md`.
+3. Run `/zen-intake` with no arguments (inbox mode; the note's `cluster:` key files it — the skill will not ask for a cluster). Expected: it reports `filed` and the note is now at `vault/15_cosmology/trust-test.md`. Then `/zen-ingest 15_cosmology/trust-test.md`.
 
 4. Check:
    - [ ] three conflict blocks with three distinct ids exist: #1 on `entities/edward-pickering.md`; #2 on both `topics/hertzsprung-russell-diagram.md` and `entities/henry-norris-russell.md` with the same id; #3 on `entities/ejnar-hertzsprung.md` only
@@ -47,7 +47,7 @@ Precondition: met — the pages below exist.
 
 5. Resolve conflict 1 in favour of the note — this is a real correction: `/zen-ingest --resolve #c-NNNN "test note holds: 1846–1919 are birth and death years from a figure caption; Pickering was director until his death in 1919"`. Check: the block is `resolved` on the page, the page text now reflects the decision (no director year range), the decision is logged, Health count drops to two.
 
-6. Record the outcome and date below. Keep `vault/15_era/trust-test.md`; removing it would leave dead source links in the wiki. Resolve conflicts 2 and 3 the same way (both favour the note), or leave them open as worked examples — record which in the Runs row.
+6. Record the outcome and date below. Keep `vault/15_cosmology/trust-test.md`; removing it would leave dead source links in the wiki. Resolve conflicts 2 and 3 the same way (both favour the note), or leave them open as worked examples — record which in the Runs row.
 
 ## Runs
 
