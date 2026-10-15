@@ -84,6 +84,15 @@ Resolution (only via `/zen-ingest --resolve`): rewrite the block to `— resolve
 
 A statement that merely confirms an existing claim is not a conflict: merge it and add the source.
 
+## Planned ingest (large inputs)
+
+For inputs over 20 KB of extracted text, `/zen-ingest` splits the procedure above across agents; the result on disk is the same as a single-agent ingest.
+
+- A **planner** performs steps 1–5 as decisions only: it reads the input and the pages it touches, and writes a plan (`.ingest/<stem>/plan.yaml` outside the vault) with every page's path, action, type, title, claims in final form with citations, links, and the conflicts with their ids. It writes no wiki page.
+- `zen-plan check` validates the plan before anything is written: page paths and types, create vs. update against what exists, every claim cited, every link target planned or existing, conflict ids sequential from `LOG.md`.
+- **Page writers** run in parallel, about six pages each. They transcribe their pages from the plan, never read the source, and never touch the source page, the input, `LOG.md` or `INDEX.md`.
+- `zen-plan finish` writes the single-owner files: the source page, the input's Summary/title/`ingested`, the LOG entry (with `- mode: planned, N pages`), and regenerates this `INDEX.md` from the pages on disk.
+
 ## LOG.md entry format
 
 The heading word is `ingest`, or `re-ingest` for a re-ingest.

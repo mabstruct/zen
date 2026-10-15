@@ -276,7 +276,7 @@ Ask cost — from benchmark run 1 (`docs/benchmarks/BENCHMARK-2026-10-15.md`): `
 Ingest time — from the 6-minute reference ingest (`docs/benchmarks/REFERENCE.md`): output generation and per-call latency dominate, not input size.
 
 - Model routing per the comparison: mid-tier for routine first ingests, premium for long/numeric documents, re-ingests and syntheses (see model selection above).
-- Plan-then-parallel: a planner reads the source once and emits the page list with each page's claims and link targets (names fixed up front, contradiction check stays here because it is the only pass that sees everything); N writers then run concurrently with only their claims plus SCHEMA. Wall time ≈ planner + slowest writer instead of the sum.
+- **Done in v1.1 (planned ingest):** planner + `zen-plan check` + parallel `zen-page-writer`s + `zen-plan finish`, for inputs over 20 KB of extracted text; not yet measured. Original idea — plan-then-parallel: a planner reads the source once and emits the page list with each page's claims and link targets (names fixed up front, contradiction check stays here because it is the only pass that sees everything); N writers then run concurrently with only their claims plus SCHEMA. Wall time ≈ planner + slowest writer instead of the sum.
 - SCHEMA thresholds for entity pages (e.g. ≥ 3 claims or cited by ≥ 2 topics; otherwise a line on the topic page) to cut page count ~30 % and fragmentation.
 - Background queue: `/zen-ingest` dispatches per-file subagents in the background and reports when done.
 - Section-wise ingest only for very long documents (> ~60k tokens): split on `## ` headings, one subagent per section, one synthesis pass.
