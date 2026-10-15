@@ -14,8 +14,8 @@ ZEN is a personal knowledge system. `vault/` is the only truth: markdown notes, 
 
 ## Never
 
-- Hand-edit `vault/INDEX.md`, `vault/_meta/`, or anything under `vault/90_wiki/`. The wiki changes only through `/zen-ingest`.
-- Move or rename vault files by hand; use `/zen-intake`, `/zen-note`.
+- Hand-edit `vault/INDEX.md`, `vault/_meta/`, or anything under `vault/90_wiki/`. The wiki changes only through `/zen-ingest` — and `/zen-move`, which may rewrite paths (`sources:` entries and links) but never a claim.
+- Move or rename vault files by hand; use `/zen-intake`, `/zen-note`, `/zen-move`.
 - Decide a conflict. Mark it; the human decides.
 
 ## After writing to the vault
@@ -24,7 +24,7 @@ Run `(cd tools && uv run zen-index --vault ../vault)`, then `./scripts/qmd-refre
 
 ## Skills
 
-`/zen-ask`, `/zen-intake`, `/zen-ingest`, `/zen-index`, `/zen-note` — see `.claude/skills/`. Wiki rules: `vault/90_wiki/SCHEMA.md`.
+`/zen-ask`, `/zen-intake`, `/zen-ingest`, `/zen-index`, `/zen-note`, `/zen-move` — see `.claude/skills/`. Wiki rules: `vault/90_wiki/SCHEMA.md`.
 
 ## Model baseline
 

@@ -1,6 +1,6 @@
 # Wiki schema — Claude's work instruction
 
-Read this before every wiki operation. Humans never edit this folder; only `/zen-ingest` writes here.
+Read this before every wiki operation. Humans never edit this folder; only `/zen-ingest` writes here — and `zen-move`, which rewrites paths (`sources:` entries and links) when a vault file changes cluster, never a claim, and logs a `move` entry.
 
 ## Page types and folders
 
