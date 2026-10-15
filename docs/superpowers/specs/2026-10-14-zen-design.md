@@ -258,3 +258,9 @@ Planned additions:
 - `zen-intake --recapture <path>` — deliberate re-capture of a changed web page as a new `captured` date on the same companion.
 - arXiv title lookup via the arXiv API at intake (one extra fetch) so companions never carry a bare id as title.
 - `/zen-ask` may read qmd chunk snippets instead of file-level hits for long PDFs (noted in §7).
+- **Model selection per task.** v1 names no model anywhere: `/zen-ingest`'s per-file subagent inherits the session model, and the session model is whatever the user last picked. Two places spend tokens and they have different needs:
+  - *Ingest* (condense, cross-link, detect contradictions) is judgment-heavy and runs unattended per file — it should default to the most capable model.
+  - *Ask* (walk the ladder, read one file, answer) is small-context and interactive — the session's model is fine.
+  - Intake, index and note need no model at all.
+
+  Proposed baseline, overridable: ship a project agent `.claude/agents/zen-ingester.md` whose frontmatter sets `model:` (baseline: the most capable available) and carries the SCHEMA procedure; `/zen-ingest` dispatches `subagent_type: zen-ingester` instead of a generic subagent, so the model lives in one versioned file. Overrides, in order of precedence: a `--model <name>` argument on `/zen-ingest` for one run; editing the agent file's `model:` for the project; the session model (`/model`) for everything `/zen-ask` does. `CLAUDE.md` gets a short "Model baseline" table stating this. Open question to decide then: whether a cheaper model is acceptable for *re-ingest* of unchanged-but-restamped files (mostly mechanical) — measure with the benchmark before deciding.
