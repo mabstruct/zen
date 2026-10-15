@@ -45,7 +45,7 @@ In a Claude Code session rooted in `zen/`:
 - `/zen-intake` files a document, URL, arXiv paper or DOI (or the whole inbox) as original plus markdown companion.
 - `/zen-note` captures a note into the right cluster.
 - `/zen-ask` answers a question from the vault, wiki first — three model calls: `zen-ask-prep` (indexes + search hits in one call), one file, the answer.
-- `/zen-ingest` condenses new or changed sources into the wiki and marks conflicts.
+- `/zen-ingest` condenses new or changed sources into the wiki and marks conflicts; routes each file to the standard or deep ingester agent (model baseline in `CLAUDE.md`).
 - `/zen-index` regenerates the index and shows vault health.
 
 Brain-First ladder: Claude reads `vault/INDEX.md` first, then the wiki, then runs qmd search, then opens exactly one file — never scanning folders and never opening `_originals/`.

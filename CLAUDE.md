@@ -26,6 +26,18 @@ Run `(cd tools && uv run zen-index --vault ../vault)`, then `./scripts/qmd-refre
 
 `/zen-ask`, `/zen-intake`, `/zen-ingest`, `/zen-index`, `/zen-note` — see `.claude/skills/`. Wiki rules: `vault/90_wiki/SCHEMA.md`.
 
+## Model baseline
+
+Tokens are spent in two places only. The baseline comes from `docs/benchmarks/2026-10-15-ingest-model-comparison.md`; change it by editing the `model:` line of the agent file.
+
+| task | runs on | why |
+|------|---------|-----|
+| `/zen-ingest`, routine first ingest | `.claude/agents/zen-ingester.md` (mid-tier) | matched the premium model on accuracy at half the time; its gaps are omissions, and the companion keeps the full text |
+| `/zen-ingest`, deep: extracted text > 50 KB, re-ingest, synthesis, or `--deep` | `.claude/agents/zen-ingester-deep.md` (premium) | depth, numbers, dense cross-links; conflict detection gets harder as the wiki grows |
+| `/zen-ingest --model <name>` | that model, this run only | one-off override |
+| `/zen-ask` | the session model (`/model`) | small context, interactive |
+| intake, index, note | no model | deterministic |
+
 ## Conventions
 
 Frontmatter on every note: `title`, `type`, `created`, `updated`, `tags` (ISO 8601 timestamps with offset). Cluster = folder (`1x_<name>`), never a frontmatter field. Standard relative markdown links. One note, one place.
