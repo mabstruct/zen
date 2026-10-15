@@ -75,3 +75,6 @@ tmp/
 /*.tgz
 /*.7z
 /*.dmg
+
+# --- workspace: a separate private git repo, created by scripts/ws-init.sh ---
+vault/
