@@ -35,8 +35,8 @@ Tokens are spent in two places only. The baseline comes from `docs/benchmarks/20
 | `/zen-ingest`, routine first ingest | `.claude/agents/zen-ingester.md` (mid-tier) | matched the premium model on accuracy at half the time; its gaps are omissions, and the companion keeps the full text |
 | `/zen-ingest`, deep: extracted text > 50 KB, re-ingest, synthesis, or `--deep` | `.claude/agents/zen-ingester-deep.md` (premium) | depth, numbers, dense cross-links; conflict detection gets harder as the wiki grows |
 | `/zen-ingest --model <name>` | that model, this run only | one-off override |
-| planned path (extracted text > 20 KB): planner | `zen-ingest-planner` / `-deep`, same routing as above | all judgement — pages, claims, conflicts — happens here |
-| planned path: page writers | `.claude/agents/zen-page-writer.md` (mid-tier), in parallel | transcription of the plan; never sees the source |
+| planned path (extracted text > 20 KB): planner | `zen-ingest-planner` / `-deep`, same routing as above | decides the structure: pages, briefs, source line ranges, links, conflicts; writes the source page and summary |
+| planned path: page writers | `.claude/agents/zen-page-writer.md` (mid-tier), in parallel | each reads its pages' source line ranges and writes the claims |
 | `/zen-ask` | the session model (`/model`) | small context, interactive |
 | intake, index, note | no model | deterministic |
 

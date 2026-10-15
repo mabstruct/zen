@@ -1,8 +1,8 @@
-# Planned ingest, run 1 (2026-10-15)
+# Planned ingest, runs 1 and 2 (2026-10-15)
 
 Does splitting ingest into one planner and parallel page writers cut wall time?
 
-**Short answer:** no, not with this plan format. The run took about 15 minutes against 14 for the single-agent ingest. The mechanics worked, but the slow part moved into the planner instead of being spread across writers.
+**Short answer:** yes, once the plan is thin. Run 1 had the planner write every claim and took about 15 minutes against 14 for the single-agent ingest; the slow part only moved into the planner. Run 2 had the planner decide structure only and let the writers write the claims: about 9¼ minutes, with the same number of pages and slightly more text.
 
 ## Setup
 
@@ -36,6 +36,28 @@ Asking the planner for "claims in final form" meant the planner wrote the conten
 
 The lower page count (22 vs 34) came from the planner's own choices, not from a rule. It may vary between runs.
 
-## Next
+## Run 2: thin plan
 
-**Thin plan:** the planner decides only the structure. That means pages and paths, a one-line brief per page, the source line ranges relevant to each page, the links, and the conflicts with their ids. Writers read their line ranges and write the claims themselves, in parallel. Expected: a few minutes of planning plus the slowest writer. This will be measured on the same document and branch as run 2.
+**Thin plan:** the planner decides only the structure. That means pages and paths, a one-line brief per page, the source line ranges relevant to each page, the links, and the conflicts with their ids. Writers read their line ranges and write the claims themselves, in parallel. Expected: a few minutes of planning plus the slowest writer. Measured on the same document and branch, rolled back again to the same state (run 1's output kept in `git stash`). The planner still ran on the deep model, so only the plan format changed.
+
+| | single-agent (baseline) | planned, run 1 (fat plan) | planned, run 2 (thin plan) |
+|---|---|---|---|
+| wall time | ~14 min | ~15 min | **~9 min 15 s** |
+| pages created (incl. source) | 29 | 22 | 29 (source + 18 topics + 10 entities) |
+| pages updated | 5 | 4 | 4 |
+| words on new pages | ~10,600 | — | ~11,400 |
+| conflicts | none | none | **1 (#c-0004)** |
+| Health afterwards | clean | clean | clean, index current |
+
+Phase timings were not broken out for run 2.
+
+**A real conflict for the first time.** `#c-0004` on `topics/attention-mechanism.md`: the 2017 paper gives a recurrent layer a path length that grows linearly, O(n). The o3 overview instead blames a "quadratic path length" on RNN/CNN pipelines. The paper's statement is the established one, but the decision is the human's (`/zen-ingest --resolve`). Neither earlier run raised this.
+
+**The writers also flagged tensions inside the o3 document itself.** These are not wiki conflicts, because a source cannot conflict with itself. GRPO is called "gradient-free" while its policy-gradient formula is given; the page records both under Open questions. The 70B size of R1-Zero and the ~100x LoRA memory figure are marked as unverified o3 claims. Writers reading the source lines directly is what made these visible.
+
+## What the runs show
+
+- The parallel step only saves time when the generation happens in it. Run 1's writers needed 46 seconds for five batches, because the planner had already written everything.
+- With a thin plan, the planner (deep model, reading the whole document) is the remaining sequential part. The next lever is running the planner on the standard model, since deciding structure needs less depth than writing claims. That is not measured yet.
+- Writers that read the source themselves produced more scrutiny (in-document tensions, unverified figures), not less.
+- One document, one run per format: treat these as strong hints, not measurements.
