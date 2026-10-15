@@ -265,3 +265,27 @@ Planned additions:
   - Intake, index and note need no model at all.
 
   Proposed baseline, overridable: ship a project agent `.claude/agents/zen-ingester.md` whose frontmatter sets `model:` (baseline: the most capable available) and carries the SCHEMA procedure; `/zen-ingest` dispatches `subagent_type: zen-ingester` instead of a generic subagent, so the model lives in one versioned file. Overrides, in order of precedence: a `--model <name>` argument on `/zen-ingest` for one run; editing the agent file's `model:` for the project; the session model (`/model`) for everything `/zen-ask` does. `CLAUDE.md` gets a short "Model baseline" table stating this. Open question to decide then: whether a cheaper model is acceptable for *re-ingest* of unchanged-but-restamped files (mostly mechanical) — measure with the benchmark before deciding.
+
+Ask cost — from benchmark run 1 (`docs/benchmarks/BENCHMARK-2026-10-15.md`): `/zen-ask` spent 460k tokens against 267k for a plain session on the same question. The vault reads were cheap (~14k); the cost is the number of model calls — each re-reads ~88k tokens of standing session instructions. Priority item:
+
+- **`zen-ask-prep "<question>"`** — one deterministic call that runs the stale check (re-indexing if needed), prints `vault/INDEX.md`, the wiki `INDEX.md` and the top qmd hits with snippets. The ladder becomes prep → open one file → answer: three calls instead of six. Keep the ladder's order and the "exactly one file" rule; only the number of round trips changes. Re-run the benchmark afterwards.
+- Session overhead (the 88k) is Claude Code plugins/MCP servers, not ZEN; document a slim session profile for ZEN work.
+
+Ingest time — from the 6-minute reference ingest (`docs/benchmarks/REFERENCE.md`): output generation and per-call latency dominate, not input size.
+
+- Model routing per the comparison: mid-tier for routine first ingests, premium for long/numeric documents, re-ingests and syntheses (see model selection above).
+- Plan-then-parallel: a planner reads the source once and emits the page list with each page's claims and link targets (names fixed up front, contradiction check stays here because it is the only pass that sees everything); N writers then run concurrently with only their claims plus SCHEMA. Wall time ≈ planner + slowest writer instead of the sum.
+- SCHEMA thresholds for entity pages (e.g. ≥ 3 claims or cited by ≥ 2 topics; otherwise a line on the topic page) to cut page count ~30 % and fragmentation.
+- Background queue: `/zen-ingest` dispatches per-file subagents in the background and reports when done.
+- Section-wise ingest only for very long documents (> ~60k tokens): split on `## ` headings, one subagent per section, one synthesis pass.
+- `ws-sync-schema.sh`: copy `workspace-template/90_wiki/SCHEMA.md` into the workspace when the template's SCHEMA changes.
+
+Robustness minors deferred by the final review (none affect correctness on current data):
+
+- `frontmatter`: an empty frontmatter block (`---\n---\n`) is not matched; `yaml.dump` folds values over 80 chars (`width=inf`); `dump()` with empty meta writes `{}`.
+- `vault`: a root-level `_cluster.md` raises; a dotted last path component (`notes/v1.2`) gets no `.md` appended; `broken_links` mixes resolved paths and raw wikilink names; path-style wikilinks (`[[10_ai/x]]`) unresolved; fences inside blockquotes and multi-line code spans not stripped; add a `bad-frontmatter`-style health kind for unreadable files.
+- `index_cli`: include directory mtimes in staleness; friendly message for a missing vault path.
+- `intake`: remove a partial companion on write failure; test the inbox-move branch of rollback; original/companion stems can diverge on collision; `input` absolute for non-md inbox items; share `CLUSTER_RE` instead of duplicating it; non-string scalar `tags` in raw notes; inbox duplicates re-reported every run.
+- `map_json`: dedupe link edges; tolerate scalar `sources:`.
+- `sources`: query string dropped from URL slugs; unbounded `resp.read()`, per-operation timeout.
+- Tests: `--no-index` and exit-0-on-duplicate for `zen-intake`; KINDS order and empty-vault render for `index_md`; PK magic check / uppercase suffix / no-title HTML for `extract`.
