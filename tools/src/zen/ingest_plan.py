@@ -16,7 +16,6 @@ from .vault import scan
 
 FOLDER_TYPE = {"topics": "wiki-topic", "entities": "wiki-entity", "syntheses": "wiki-synthesis"}
 TYPE_ORDER = ("wiki-source", "wiki-topic", "wiki-entity", "wiki-synthesis")
-CITATION_RE = re.compile(r"\]\((?:\.\./)?sources/[^)\s]+\.md\)")
 CONFLICT_ID_RE = re.compile(r"#c-(\d{4})")
 INDEX_HEADER = "# Wiki index\n\nMaintained by `/zen-ingest`. One line per page.\n"
 
@@ -39,8 +38,10 @@ def check(vault: Path, plan: dict) -> list[str]:
             errs.append(f"missing key: {key}")
     if errs:
         return errs
-    if not (vault / plan["input"]).is_file():
+    input_file = vault / plan["input"]
+    if not input_file.is_file():
         errs.append(f"input not found: {plan['input']}")
+    n_lines = len(input_file.read_text(encoding="utf-8").splitlines()) if input_file.is_file() else 0
 
     sp = plan["source_page"] or {}
     sp_path = str(sp.get("path", ""))
@@ -69,9 +70,17 @@ def check(vault: Path, plan: dict) -> list[str]:
             errs.append(f"{path}: action must be create or update")
         if not p.get("title"):
             errs.append(f"{path}: missing title")
-        for claim in p.get("claims") or []:
-            if not CITATION_RE.search(str(claim)):
-                errs.append(f"{path}: uncited claim (needs a link to a sources/ page): {str(claim)[:60]}")
+        if "claims" in p:
+            errs.append(f"{path}: thin plan — claims are written by the page writers, not the planner; give a brief and source_lines")
+        if not str(p.get("brief") or "").strip():
+            errs.append(f"{path}: missing brief (one line on what the page should cover)")
+        ranges = p.get("source_lines") or []
+        if not ranges:
+            errs.append(f"{path}: missing source_lines (line ranges of the input the writer should read)")
+        for r in ranges:
+            ok = isinstance(r, list) and len(r) == 2 and all(isinstance(x, int) for x in r)
+            if not ok or not (1 <= r[0] <= r[1] <= n_lines):
+                errs.append(f"{path}: source_lines range {r} is not within lines 1–{n_lines} of the input")
         for link in p.get("links") or []:
             if str(link) not in targets:
                 errs.append(f"{path}: link target {link} is neither planned nor an existing wiki page")

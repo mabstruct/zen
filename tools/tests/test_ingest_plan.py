@@ -25,7 +25,8 @@ def plan(**over) -> dict:
                 "action": "create",
                 "type": "wiki-topic",
                 "title": "Self-attention",
-                "claims": ["Self-attention relates positions. ([attention](../sources/attention.md))"],
+                "brief": "What self-attention is and why it replaces recurrence.",
+                "source_lines": [[1, 8]],
                 "links": ["topics/transformers.md", "entities/vaswani.md"],
                 "conflicts": [],
             },
@@ -34,7 +35,8 @@ def plan(**over) -> dict:
                 "action": "create",
                 "type": "wiki-entity",
                 "title": "Ashish Vaswani",
-                "claims": ["First author. ([attention](../sources/attention.md))"],
+                "brief": "First author of the paper.",
+                "source_lines": [[2, 3]],
                 "links": ["topics/self-attention.md"],
                 "conflicts": [],
             },
@@ -43,7 +45,8 @@ def plan(**over) -> dict:
                 "action": "update",
                 "type": "wiki-topic",
                 "title": "Transformers",
-                "claims": ["Uses no recurrence. ([attention](../sources/attention.md))"],
+                "brief": "Add: the architecture uses no recurrence.",
+                "source_lines": [[5, 8], [10, 12]],
                 "links": ["topics/self-attention.md", "sources/attention.md"],
                 "conflicts": ["#c-0001"],
             },
@@ -90,10 +93,29 @@ def test_links_must_resolve_to_planned_or_existing(vault: Path):
     assert any("topics/ghost.md" in x for x in errors(vault, p))
 
 
-def test_every_claim_cites_a_source_page(vault: Path):
+def test_thin_plan_forbids_written_claims(vault: Path):
     p = plan()
-    p["pages"][1]["claims"].append("An uncited claim.")
-    assert any("uncited" in x.lower() or "citation" in x for x in errors(vault, p))
+    p["pages"][1]["claims"] = ["A claim written by the planner."]
+    assert any("entities/vaswani.md" in x and "claims" in x for x in errors(vault, p))
+
+
+def test_every_page_needs_brief_and_source_lines(vault: Path):
+    p = plan()
+    del p["pages"][0]["brief"]
+    p["pages"][1]["source_lines"] = []
+    e = errors(vault, p)
+    assert any("topics/self-attention.md" in x and "brief" in x for x in e)
+    assert any("entities/vaswani.md" in x and "source_lines" in x for x in e)
+
+
+def test_source_lines_must_lie_inside_the_input(vault: Path):
+    n = len((vault / "10_ai" / "attention.md").read_text(encoding="utf-8").splitlines())
+    p = plan()
+    p["pages"][0]["source_lines"] = [[5, n + 1]]
+    p["pages"][1]["source_lines"] = [[4, 2]]
+    e = errors(vault, p)
+    assert any("topics/self-attention.md" in x and str(n) in x for x in e)
+    assert any("entities/vaswani.md" in x and "[4, 2]" in x for x in e)
 
 
 def test_conflict_ids_continue_from_log(vault: Path):

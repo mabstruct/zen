@@ -1,17 +1,17 @@
 ---
 name: zen-ingest-planner-deep
-description: Planner for a planned (parallel) ZEN wiki ingest, premium model. Reads one input, the wiki SCHEMA and INDEX and the existing pages the input touches; writes a plan file listing every page, its claims, links and conflicts. Writes no wiki pages. Dispatched by /zen-ingest for large ingests that route to the deep ingester (long or numeric documents, re-ingests).
+description: Planner for a planned (parallel) ZEN wiki ingest, premium model. Reads one input, the wiki SCHEMA and INDEX and the existing pages the input touches; writes a thin plan: every page with a one-line brief, the source line ranges its writer must read, links and conflicts. Writes no claims and no wiki pages. Dispatched by /zen-ingest for large ingests that route to the deep ingester (long or numeric documents, re-ingests).
 tools: Read, Write, Bash, Grep, Glob
 model: fable
 ---
 
-You plan one wiki ingest for ZEN in /Users/mab/dev/mabstruct/zen. You decide everything; writers only transcribe your plan, in parallel, without seeing the source. The dispatch gives you the SCHEMA text, the current wiki INDEX text, the input path, the plan path to write, and the `ingested` timestamp to use.
+You plan one wiki ingest for ZEN in /Users/mab/dev/mabstruct/zen. You decide the **structure**; parallel page writers write the content. Keep the plan thin — writing claims here would make you the bottleneck. The dispatch gives you the SCHEMA text, the current wiki INDEX text, the input path, the plan path to write, and the `ingested` timestamp to use.
 
-1. Read the input. From the wiki INDEX, open the existing pages it touches — and only those.
-2. Decide the pages exactly as SCHEMA's ingest procedure would: the source page, topics, entities, syntheses (only if ≥ 3 sources converge). For an existing page, plan only the claims to add.
-3. Write every claim in final form, ending with its citation link exactly as SCHEMA requires, written relative to a `topics/`/`entities/`/`syntheses/` page: `([<stem>](../sources/<stem>.md))`.
-4. For every claim, check the existing pages you opened for a contradicting statement. Each one becomes a conflict with the next sequential id (one more than the highest `#c-NNNN` in `vault/90_wiki/LOG.md`), listed on every page where it is visible.
-5. Fix all page paths up front (SCHEMA slug rules), so `links` can name pages that do not exist yet.
+1. Read the input, noting line numbers. From the wiki INDEX, open the existing pages it touches — and only those.
+2. Decide the pages exactly as SCHEMA's ingest procedure would: topics, entities, syntheses (only if ≥ 3 sources converge). For an existing page, plan only what to add.
+3. For each page give: path (SCHEMA slug rules, fixed up front so `links` can name pages that do not exist yet), action, type, title, a **one-line brief** of what the writer should cover, and the **source_lines** ranges of the input the writer must read (inclusive, 1-based, as `[[start, end], …]`). Ranges may overlap between pages. Do **not** write claims.
+4. Check the existing pages you opened for statements the input contradicts. Each one becomes a conflict with the next sequential id (one more than the highest `#c-NNNN` in `vault/90_wiki/LOG.md`), listed on every page where it is visible. Conflicts are the one place you quote claims, because only you see both sides.
+5. Write the source page body and the companion summary yourself — they are short and need the whole document.
 6. Write the plan as YAML to the plan path:
 
 ```yaml
@@ -19,7 +19,7 @@ input: 10_ai/x.md
 ingested: <timestamp given>
 title: <real title if the companion's title is a bare identifier, else null>
 summary: |
-  3–6 lines for the companion's empty ## Summary (omit or null if it already has one)
+  3–6 lines for the companion's empty ## Summary (null if it already has one)
 source_page:
   path: sources/x.md
   title: <input title>
@@ -31,8 +31,8 @@ pages:
     action: create            # or update
     type: wiki-topic           # must match the folder
     title: Self-attention
-    claims:
-      - "Self-attention relates every position to every other. ([x](../sources/x.md))"
+    brief: What self-attention computes and why it replaces recurrence.
+    source_lines: [[120, 185], [402, 410]]
     links: [topics/transformers.md, entities/vaswani.md]   # wiki paths, planned or existing
     conflicts: []             # ids this page must show
 conflicts:
