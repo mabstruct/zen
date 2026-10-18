@@ -43,10 +43,12 @@ def _extract_pdf(path: Path) -> Extraction:
 
     doc = pymupdf.open(str(path))
     try:
-        text = "\n\n".join(page.get_text() for page in doc).strip()
+        pages = [page.get_text().strip() for page in doc]
         title = (doc.metadata or {}).get("title") or None
     finally:
         doc.close()
-    if not text:
+    if not any(pages):
         return Extraction("failed", "", title, "empty extraction")
+    # page markers anchor book sectioning and page-level references; an HTML comment renders as nothing
+    text = "\n\n".join(f"<!-- page {i} -->\n{t}" for i, t in enumerate(pages, 1))
     return Extraction("ok", text + "\n", title)

@@ -82,3 +82,15 @@ def test_html_without_title_has_none(tmp_path: Path):
     p.write_text("<html><body><p>No title here</p></body></html>", encoding="utf-8")
     r = ex.extract(p)
     assert r.status == "ok" and r.title is None
+
+
+def test_pdf_pages_are_marked(tmp_path: Path):
+    import pymupdf
+    doc = pymupdf.open()
+    for text in ("First page text", "Second page text"):
+        page = doc.new_page(width=600, height=200)
+        page.insert_text((20, 50), text)
+    p = tmp_path / "two.pdf"
+    doc.save(p)
+    md = ex.extract(p).markdown
+    assert md.index("<!-- page 1 -->") < md.index("First page text") < md.index("<!-- page 2 -->") < md.index("Second page text")
