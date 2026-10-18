@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from conftest import make_pdf
+from conftest import make_pdf, write
 from zen import frontmatter as fm, intake
 
 NOW = "2026-10-14T12:00:00+02:00"
@@ -182,3 +182,56 @@ def test_source_local_outside_originals_is_not_moved(vault: Path, tmp_path: Path
     assert outside.exists()
     assert not (vault / "10_ai" / "_originals" / "outside.txt").exists()
     assert not (vault / "00_inbox" / "_originals").exists() or not list((vault / "00_inbox" / "_originals").iterdir())
+
+
+def test_companion_write_failure_leaves_no_partial_file(vault: Path, tmp_path: Path, monkeypatch):
+    src = tmp_path / "w.html"; src.write_text("<p>w</p>", encoding="utf-8")
+
+    def half_write(path, doc):
+        Path(path).write_text("partial", encoding="utf-8")
+        raise OSError("disk full")
+
+    monkeypatch.setattr(intake.fm, "write", half_write)
+    r = intake.intake_item(vault, str(src), "10_ai", now=NOW)
+    assert r.status == "failed" and "disk full" in r.note
+    assert not (vault / "10_ai" / "w.md").exists()
+    assert not (vault / "10_ai" / "_originals" / "w.html").exists()
+
+
+def test_rollback_moves_inbox_file_back(vault: Path, monkeypatch):
+    src = vault / "00_inbox" / "back.html"; src.write_text("<p>b</p>", encoding="utf-8")
+    monkeypatch.setattr(intake, "extract", lambda p: (_ for _ in ()).throw(RuntimeError("boom")))
+    rep = intake.intake_inbox(vault, "10_ai", now=NOW)
+    assert [i.status for i in rep.items if "back.html" in i.input] == ["failed"]
+    assert src.exists() and not (vault / "10_ai" / "_originals" / "back.html").exists()
+
+
+def test_original_and_companion_share_one_stem_on_collision(vault: Path, tmp_path: Path):
+    write(vault / "10_ai" / "paper.md", "---\ntitle: A note called paper\ntype: note\n---\nx\n")
+    src = tmp_path / "paper.pdf"; src.write_bytes(make_pdf("Paper body"))
+    r = intake.intake_item(vault, str(src), "10_ai", now=NOW)
+    assert r.companion == "10_ai/paper-2.md" and r.original == "10_ai/_originals/paper-2.pdf"
+
+
+def test_inbox_items_report_vault_relative_input(vault: Path):
+    (vault / "00_inbox" / "drop.html").write_text("<p>d</p>", encoding="utf-8")
+    rep = intake.intake_inbox(vault, "10_ai", now=NOW)
+    assert "00_inbox/drop.html" in [i.input for i in rep.items]
+
+
+def test_raw_note_scalar_tags_become_strings(vault: Path):
+    (vault / "00_inbox" / "t.md").write_text("---\ntags: 2024\n---\n# T\n", encoding="utf-8")
+    intake.intake_inbox(vault, None, now=NOW)
+    assert fm.read(vault / "00_inbox" / "t.md").meta["tags"] == ["2024"]
+
+
+def test_inbox_duplicates_are_moved_aside_and_reported_once(vault: Path, tmp_path: Path):
+    first = tmp_path / "same.html"; first.write_text("<p>same</p>", encoding="utf-8")
+    assert intake.intake_item(vault, str(first), "10_ai", now=NOW).status == "filed"
+    (vault / "00_inbox" / "again.html").write_text("<p>same</p>", encoding="utf-8")
+    rep = intake.intake_inbox(vault, None, now=NOW)
+    dup = [i for i in rep.items if "again.html" in i.input]
+    assert dup[0].status == "duplicate" and "00_inbox/_duplicates/again.html" in dup[0].note
+    assert not (vault / "00_inbox" / "again.html").exists()
+    assert (vault / "00_inbox" / "_duplicates" / "again.html").exists()
+    assert not [i for i in intake.intake_inbox(vault, None, now=NOW).items if "again.html" in i.input]

@@ -28,8 +28,11 @@ def build(scan: VaultScan, now: datetime) -> dict:
             nodes.setdefault(tid, {"id": tid, "path": None, "title": t, "type": "tag", "cluster": None, "tags": [],
                                     "size": 0, "created": None, "updated": None, "captured": None, "ingested": None})
 
+    seen: set[tuple[str, str, str]] = set()
+
     def add(frm: str, to: str, kind: str) -> None:
-        if frm in nodes and to in nodes:
+        if frm in nodes and to in nodes and (frm, to, kind) not in seen:
+            seen.add((frm, to, kind))
             edges.append({"from": frm, "to": to, "kind": kind})
 
     for d in scan.docs.values():
@@ -40,7 +43,8 @@ def build(scan: VaultScan, now: datetime) -> dict:
         src = d.meta.get("source")
         if isinstance(src, dict) and src.get("local") and d.cluster:
             add(d.rel, f"{d.cluster}/{src['local']}", "source")
-        for s in d.meta.get("sources") or []:
+        srcs = d.meta.get("sources") or []
+        for s in [srcs] if isinstance(srcs, str) else srcs:
             add(d.rel, str(s), "wiki")
 
     edges.sort(key=lambda e: (e["from"], e["to"], e["kind"]))

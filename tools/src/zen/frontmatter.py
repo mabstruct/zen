@@ -7,7 +7,7 @@ from pathlib import Path
 
 import yaml
 
-_FM_RE = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n?", re.DOTALL)
+_FM_RE = re.compile(r"\A---\r?\n(?:(.*?)\r?\n)?---\r?\n?", re.DOTALL)
 _TIMESTAMP_TAG = "tag:yaml.org,2002:timestamp"
 
 
@@ -34,15 +34,18 @@ def parse(text: str) -> Document:
     m = _FM_RE.match(text)
     if not m:
         return Document({}, text)
-    meta = yaml.load(m.group(1), Loader=_Loader) or {}
+    meta = yaml.load(m.group(1) or "", Loader=_Loader) or {}
     if not isinstance(meta, dict):
         raise ValueError("frontmatter is not a mapping")
     return Document(meta, text[m.end():])
 
 
 def dump(doc: Document) -> str:
+    if not doc.meta:
+        return doc.body
     meta = yaml.dump(
-        doc.meta, Dumper=_Dumper, sort_keys=False, allow_unicode=True, default_flow_style=False
+        doc.meta, Dumper=_Dumper, sort_keys=False, allow_unicode=True, default_flow_style=False,
+        width=float("inf"),
     ).rstrip("\n")
     return f"---\n{meta}\n---\n{doc.body}"
 

@@ -46,3 +46,27 @@ def test_run_is_idempotent(vault: Path):
     first = (vault / "INDEX.md").read_bytes(), (vault / "_meta" / "map.json").read_bytes()
     index_cli.run(vault, now=NOW)
     assert first == ((vault / "INDEX.md").read_bytes(), (vault / "_meta" / "map.json").read_bytes())
+
+
+def test_deleting_a_note_makes_index_stale(vault: Path):
+    index_cli.run(vault, now=NOW)
+    assert not index_cli.is_stale(vault)
+    time.sleep(0.01)
+    (vault / "11_research" / "orphan.md").unlink()
+    assert index_cli.is_stale(vault)
+
+
+def test_renaming_a_note_makes_index_stale(vault: Path):
+    index_cli.run(vault, now=NOW)
+    p = vault / "11_research" / "orphan.md"
+    st = p.stat().st_mtime
+    time.sleep(0.01)
+    p.rename(vault / "11_research" / "renamed.md")
+    os.utime(vault / "11_research" / "renamed.md", (st, st))  # mv keeps the file mtime
+    assert index_cli.is_stale(vault)
+
+
+def test_missing_vault_is_a_clear_error(tmp_path: Path, capsys):
+    assert index_cli.run(tmp_path / "nope") == 2
+    assert index_cli.run(tmp_path / "nope", check=True) == 2
+    assert "no vault at" in capsys.readouterr().err

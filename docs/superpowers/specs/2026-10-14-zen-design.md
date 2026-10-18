@@ -255,6 +255,7 @@ Updated 2026-10-18, after v1.1 (PRs #1–#5 merged).
 - **`zen-intake --retry-missing` / `--recapture <path>`** — refresh a companion in place; earlier snapshots live in the workspace git history; recapture clears Summary so re-ingest rewrites it.
 - **Planned ingest** — for extracted text > 20 KB: a planner writes a thin plan (pages, briefs, source line ranges, links, conflicts), `zen-plan check` validates it, `zen-page-writer`s write claims in parallel, `zen-plan finish` writes the single-owner files. ~9¼ min vs ~14 min on a 79 KB document: `docs/benchmarks/2026-10-15-planned-ingest.md`.
 - **`scripts/ws-sync-schema.sh`** (`zen-sync-schema`) — copies the template's SCHEMA into the workspace; `--check` reports drift; refuses to overwrite uncommitted workspace edits without `--force`.
+- **Robustness pass** (the v1 final review's deferred minors): empty frontmatter blocks, unfolded long values, root `_cluster.md`, dotted link targets, path-style wikilinks, fences in blockquotes, deletes and renames marking the index stale, no partial companion on failure, one stem for original and companion, inbox duplicates moved to `00_inbox/_duplicates/`, one map edge per relation, query strings in URL slugs, downloads capped at 200 MB / 300 s, plus the missing tests.
 - Fixes found on the way: HTML `<title>` crashed intake (BeautifulSoup string in YAML); one bad frontmatter no longer stops the indexer or intake (`bad-frontmatter` health kind); `source.local` containment when filing inbox companions; links and conflict markers inside code are ignored; companions start with a `# <title>` heading.
 
 ### Open — needs a design decision first
@@ -271,14 +272,7 @@ Updated 2026-10-18, after v1.1 (PRs #1–#5 merged).
 
 ### Open — small, no design needed
 
-- Robustness minors deferred by the v1 final review (none affect correctness on current data):
-  - `frontmatter`: an empty frontmatter block (`---\n---\n`) is not matched; `yaml.dump` folds values over 80 chars (`width=inf`); `dump()` with empty meta writes `{}`.
-  - `vault`: a root-level `_cluster.md` raises; a dotted last path component (`notes/v1.2`) gets no `.md` appended; `broken_links` mixes resolved paths and raw wikilink names; path-style wikilinks (`[[10_ai/x]]`) unresolved; fences inside blockquotes and multi-line code spans not stripped.
-  - `index_cli`: include directory mtimes in staleness (deletes and renames); friendly message for a missing vault path.
-  - `intake`: remove a partial companion on write failure; test the inbox-move branch of rollback; original/companion stems can diverge on collision; `input` absolute for non-md inbox items; share `CLUSTER_RE` instead of duplicating it; non-string scalar `tags` in raw notes; inbox duplicates re-reported every run.
-  - `map_json`: dedupe link edges; tolerate scalar `sources:`.
-  - `sources`: query string dropped from URL slugs; unbounded `resp.read()`, per-operation timeout.
-  - Tests: `--no-index` and exit-0-on-duplicate for `zen-intake`; KINDS order and empty-vault render for `index_md`; PK magic check / uppercase suffix / no-title HTML for `extract`.
+- Multi-line inline code spans are not stripped before link detection (single-line spans and fences, including fences inside blockquotes, are).
 
 ### Known deviations from this spec
 
@@ -286,4 +280,3 @@ Updated 2026-10-18, after v1.1 (PRs #1–#5 merged).
 - An explicit `.md` path given to intake from outside the inbox is treated as an original with a companion rather than filed as a note.
 - `zen-intake vault/00_inbox` as a folder spec runs the file path, not inbox mode; use `zen-intake` with no arguments.
 - arXiv companions are titled by their id when the PDF carries no metadata title; ingest sets the real title.
-- Deleting or renaming a vault file does not mark the index stale (`--check` compares file mtimes only).

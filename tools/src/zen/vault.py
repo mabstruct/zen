@@ -19,6 +19,7 @@ WIKILINK_RE = re.compile(r"\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]")
 CONFLICT_RE = re.compile(r"^> \[!conflict\] (#c-\d+) — open\s*$", re.M)
 HEADING_RE = re.compile(r"^#\s+(.+?)\s*$", re.M)
 CLUSTER_RE = re.compile(r"^1\d_")
+CLUSTER_NAME_RE = re.compile(r"1\d_[^/\\]+")  # a full cluster folder name; use with fullmatch
 
 
 @dataclass
@@ -107,6 +108,7 @@ def _type_of(meta: dict, rel: str) -> str:
 
 
 FENCE_RE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
+BLOCKQUOTE_RE = re.compile(r"^(?:\s*>\s?)+")
 INLINE_CODE_RE = re.compile(r"(?<!`)(`+)(?!`)(.+?)(?<!`)\1(?!`)")
 
 
@@ -114,7 +116,7 @@ def _strip_code(body: str) -> str:
     out: list[str] = []
     fence: str | None = None
     for line in body.split("\n"):
-        m = FENCE_RE.match(line)
+        m = FENCE_RE.match(BLOCKQUOTE_RE.sub("", line))
         if fence is None:
             if m:
                 fence = m.group(1)[0] * len(m.group(1))
@@ -123,7 +125,7 @@ def _strip_code(body: str) -> str:
                 out.append(INLINE_CODE_RE.sub(" ", line))
         else:
             out.append("")
-            if m and m.group(1)[0] == fence[0] and len(m.group(1)) >= len(fence) and not line.strip().strip(fence[0]):
+            if m and m.group(1)[0] == fence[0] and len(m.group(1)) >= len(fence) and not BLOCKQUOTE_RE.sub("", line).strip().strip(fence[0]):
                 fence = None
     return "\n".join(out)
 
@@ -150,6 +152,14 @@ def _resolve_md(rel_dir: PurePosixPath, target: str) -> str:
             parts.append(part)
     out = "/".join(parts)
     return out if PurePosixPath(out).suffix else out + ".md"
+
+
+def _resolve_wikilink(name: str, rel_dir: PurePosixPath, docs: dict, by_title: dict, by_stem: dict) -> str | None:
+    key = name[:-3] if name.lower().endswith(".md") else name
+    for cand in (key + ".md", _resolve_md(rel_dir, key + ".md")):
+        if cand in docs:
+            return cand
+    return by_title.get(name.lower()) or by_title.get(key.lower()) or by_stem.get(PurePosixPath(key).name.lower())
 
 
 def scan(root: Path) -> VaultScan:
@@ -179,6 +189,8 @@ def scan(root: Path) -> VaultScan:
                 continue
             path = root / rel
             if f == "_cluster.md":
+                if not rel_dir.parts:
+                    continue
                 text = path.read_text(encoding="utf-8").strip()
                 cluster_desc[rel_dir.parts[0]] = text.splitlines()[0] if text else ""
                 continue
@@ -215,16 +227,19 @@ def scan(root: Path) -> VaultScan:
     by_stem = {PurePosixPath(d.rel).stem.lower(): d.rel for d in docs.values()}
     broken: list[tuple[str, str]] = []
     for rel, names in pending_wikilinks.items():
+        rel_dir = PurePosixPath(rel).parent
         for name in names:
-            target = by_title.get(name.lower()) or by_stem.get(name.lower())
+            target = _resolve_wikilink(name, rel_dir, docs, by_title, by_stem)
             if target:
                 docs[rel].links.append(target)
             else:
-                broken.append((rel, name))
+                broken.append((rel, f"[[{name}]]"))
     for d in docs.values():
         kept: list[str] = []
         counted: set[str] = set()
         for target in d.links:
+            if target not in docs and not (root / target).exists() and target + ".md" in docs:
+                target = target + ".md"
             if target in docs:
                 kept.append(target)
                 if target not in counted:

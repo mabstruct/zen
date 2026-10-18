@@ -40,3 +40,18 @@ def test_read_write_round_trip(tmp_path: Path):
     fm.write(p, fm.Document({"title": "A"}, "b\n"))
     assert fm.read(p).meta == {"title": "A"}
     assert p.read_text(encoding="utf-8") == "---\ntitle: A\n---\nb\n"
+
+
+def test_empty_frontmatter_block_is_parsed_as_empty_meta():
+    doc = fm.parse("---\n---\n# Body\n")
+    assert doc.meta == {} and doc.body == "# Body\n"
+
+
+def test_long_values_are_not_folded():
+    title = "A very long title " * 8
+    out = fm.dump(fm.Document({"title": title.strip()}, "x\n"))
+    assert out.splitlines()[1] == "title: " + title.strip()
+
+
+def test_dump_with_empty_meta_writes_body_only():
+    assert fm.dump(fm.Document({}, "# Body\n")) == "# Body\n"

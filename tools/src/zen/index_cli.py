@@ -17,6 +17,7 @@ def _content_mtime(vault: Path) -> float:
     latest = 0.0
     for dirpath, dirnames, filenames in os.walk(vault):
         dirnames[:] = [d for d in dirnames if d not in (SKIP_DIRS - {"_originals"})]
+        latest = max(latest, Path(dirpath).stat().st_mtime)  # a delete or rename changes only the folder
         for f in filenames:
             p = Path(dirpath) / f
             rel = p.relative_to(vault).as_posix()
@@ -35,6 +36,9 @@ def is_stale(vault: Path) -> bool:
 
 def run(vault: Path, check: bool = False, now: datetime | None = None) -> int:
     vault = vault.resolve()
+    if not vault.is_dir():
+        print(f"no vault at {vault} — run scripts/ws-init.sh or pass --vault", file=sys.stderr)
+        return 2
     if check:
         if is_stale(vault):
             print(f"stale: {vault / 'INDEX.md'} is older than vault content — run zen-index", file=sys.stderr)

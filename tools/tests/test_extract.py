@@ -62,3 +62,23 @@ def test_html_title_is_a_plain_str(tmp_path: Path):
     p.write_text("<html><head><title>Page T</title></head><body><p>x</p></body></html>", encoding="utf-8")
     r = ex.extract(p)
     assert type(r.title) is str and r.title == "Page T"
+
+
+def test_office_files_need_zip_magic(tmp_path: Path):
+    for name in ("bad.docx", "bad.pptx", "bad.xlsx"):
+        p = tmp_path / name
+        p.write_bytes(b"not a zip")
+        assert ex.extract(p).status == "failed", name
+
+
+def test_uppercase_suffix_is_handled(tmp_path: Path):
+    p = tmp_path / "UP.PDF"
+    p.write_bytes(make_pdf("Upper case"))
+    assert "Upper case" in ex.extract(p).markdown
+
+
+def test_html_without_title_has_none(tmp_path: Path):
+    p = tmp_path / "nt.html"
+    p.write_text("<html><body><p>No title here</p></body></html>", encoding="utf-8")
+    r = ex.extract(p)
+    assert r.status == "ok" and r.title is None
