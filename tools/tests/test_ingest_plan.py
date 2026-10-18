@@ -198,3 +198,60 @@ def test_cli_check_and_batches(vault: Path, tmp_path: Path, capsys):
     bad["pages"][0]["links"].append("topics/ghost.md")
     f.write_text(yaml.safe_dump(bad, sort_keys=False), encoding="utf-8")
     assert ip.main(["check", str(f), "--vault", str(vault)]) == 1
+
+
+def section_plan(index: int, count: int, lines: list[int], **over) -> dict:
+    p = plan(**over)
+    p["section"] = {"index": index, "count": count, "title": f"Part {index}", "lines": lines}
+    p["section_summary"] = f"What part {index} covers."
+    for pg in p["pages"]:
+        pg["source_lines"] = [[lines[0], lines[0]]]
+    if index < count:
+        p["summary"] = None
+        p["source_page"]["body"] = None
+    return p
+
+
+def test_section_plan_lines_must_stay_inside_the_section(vault: Path):
+    p = section_plan(1, 2, [1, 6])
+    p["pages"][0]["source_lines"] = [[5, 9]]
+    assert any("topics/self-attention.md" in x and "section" in x for x in errors(vault, p))
+
+
+def test_section_plan_needs_a_section_summary(vault: Path):
+    p = section_plan(1, 2, [1, 6])
+    del p["section_summary"]
+    assert any("section_summary" in x for x in errors(vault, p))
+
+
+def test_only_the_last_section_needs_book_summary_and_intro(vault: Path):
+    assert errors(vault, section_plan(1, 2, [1, 6])) == []
+    last = section_plan(2, 2, [7, 12])
+    last["summary"] = None
+    assert any("summary" in x for x in errors(vault, last))
+
+
+def test_sectioned_finish_assembles_source_page_and_stamps_only_at_the_end(vault: Path, tmp_path: Path):
+    _write_planned_pages(vault)
+    d = tmp_path / "ingest"
+    d.mkdir()
+    s1, s2 = section_plan(1, 2, [1, 6]), section_plan(2, 2, [7, 12])
+    s2["pages"] = []
+    s2["conflicts"] = []
+    (d / "section-01.yaml").write_text(yaml.safe_dump(s1, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    ip.finish(vault, s1, plan_dir=d)
+    src = (vault / "90_wiki" / "sources" / "attention.md").read_text(encoding="utf-8")
+    assert "in progress: 1 of 2 sections" in src and "### 1. Part 1" in src and "What part 1 covers." in src
+    assert "[10_ai/attention.md](../../10_ai/attention.md)" in src
+    assert "ingested" not in fm.read(vault / "10_ai" / "attention.md").meta
+    log = (vault / "90_wiki" / "LOG.md").read_text(encoding="utf-8")
+    assert f"## {TS} ingest 10_ai/attention.md (section 1/2: Part 1)" in log
+
+    (d / "section-02.yaml").write_text(yaml.safe_dump(s2, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    ip.finish(vault, s2, plan_dir=d)
+    src = (vault / "90_wiki" / "sources" / "attention.md").read_text(encoding="utf-8")
+    assert "in progress" not in src and "Claims here." in src
+    assert src.index("### 1. Part 1") < src.index("### 2. Part 2")
+    assert fm.read(vault / "10_ai" / "attention.md").meta["ingested"] == TS
+    log = (vault / "90_wiki" / "LOG.md").read_text(encoding="utf-8")
+    assert "(section 2/2: Part 2)" in log and "re-ingest" not in log
