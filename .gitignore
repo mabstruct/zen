@@ -78,3 +78,6 @@ tmp/
 
 # --- workspace: a separate private git repo, created by scripts/ws-init.sh ---
 vault/
+
+# --- planned-ingest scratch (plans are deleted after a successful run) ---
+.ingest/
