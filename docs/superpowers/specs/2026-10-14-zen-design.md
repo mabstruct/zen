@@ -237,57 +237,53 @@ Thin: they call tools and carry rules; no logic lives in a prompt that could liv
 
 No graph or web app. No OCR. No automatic cluster assignment. No Obsidian plugin or `.obsidian/` config. No cloud sync. No chunk-level retrieval in `/zen-ask`. No migration tooling for mabstruct-workspace or CONSTRUCT.
 
-## 13. Open items for the plan
+## 13. Status and backlog
 
-- Verify qmd: install, CLI surface, ignore configuration, re-index command, where it stores its database (keep it out of `vault/`).
-- Verify `markitdown` coverage for the listed formats and its handling of arXiv PDFs.
-- Decide whether `zen/` is its own git repo (currently initialised) and whether `vault/` is committed — proposal: yes to both, `_originals/` included, with a size guard in `.gitignore` for files over 50 MB.
+Updated 2026-10-18, after v1.1 (PRs #1–#5 merged).
 
-### v1.1 backlog
+### Plan-time open items — resolved
 
-Known deviations from this spec in v1:
+- qmd verified and configured project-locally (`.qmd/`, outside the vault).
+- `markitdown` verified; PDFs are extracted with PyMuPDF instead (pdfminer dropped word spacing on arXiv PDFs).
+- `zen/` is its own public repo; the vault is a separate private repo (`zen-ws`), git-ignored here and created by `scripts/ws-init.sh`. Large originals are flagged in Health rather than size-guarded in `.gitignore`.
+
+### Done in v1.1
+
+- **`zen-ask-prep`** — ladder steps 0–3 in one deterministic call; `/zen-ask` is three model calls (prep, one file, answer). Benchmark: `docs/benchmarks/BENCHMARK-2026-10-15.md`.
+- **Ingest model routing** — `zen-ingester` (mid-tier) and `zen-ingester-deep` (premium: extracted text > 50 KB, re-ingest, synthesis, `--deep`); `--model` overrides one run; Model baseline table in `CLAUDE.md`. Baseline from `docs/benchmarks/2026-10-15-ingest-model-comparison.md`.
+- **`zen-move`** — re-file a note or companion into another cluster (`<path> --cluster <id>`) or rename a whole cluster (`--rename-cluster <old> <new>`). Moves files and originals, rewrites links and wiki `sources:`, logs a `move` entry, never bumps `updated`, rolls back on a new broken link. The one path-only writer under `90_wiki/` besides ingest (stated in §7 and SCHEMA).
+- **`zen-intake --retry-missing` / `--recapture <path>`** — refresh a companion in place; earlier snapshots live in the workspace git history; recapture clears Summary so re-ingest rewrites it.
+- **Planned ingest** — for extracted text > 20 KB: a planner writes a thin plan (pages, briefs, source line ranges, links, conflicts), `zen-plan check` validates it, `zen-page-writer`s write claims in parallel, `zen-plan finish` writes the single-owner files. ~9¼ min vs ~14 min on a 79 KB document: `docs/benchmarks/2026-10-15-planned-ingest.md`.
+- Fixes found on the way: HTML `<title>` crashed intake (BeautifulSoup string in YAML); one bad frontmatter no longer stops the indexer or intake (`bad-frontmatter` health kind); `source.local` containment when filing inbox companions; links and conflict markers inside code are ignored; companions start with a `# <title>` heading.
+
+### Open — needs a design decision first
+
+- **Entity page threshold** in SCHEMA (e.g. ≥ 3 claims or cited by ≥ 2 topics; otherwise a line on the topic page). Large ingests produced 9–15 entity pages per document, many thin.
+- **Section-wise ingest** for very long documents (> ~60k tokens, i.e. books): split on headings, plan per section, one synthesis pass.
+- **Standard-model planner** for the planned path — the deep planner is now the only sequential step; measure before switching.
+- Cheaper model for mechanical re-ingests of restamped files — measure before changing the rule.
+- arXiv title lookup via the arXiv API at intake (one extra fetch).
+- `/zen-ask` reading qmd chunk snippets instead of file-level hits for long PDFs.
+- Background queue: `/zen-ingest` with no arguments works the queue in the background and reports when done.
+- Slim session profile for ZEN work (the ~27k-token cache write per session is Claude Code overhead, not ZEN).
+- `scripts/compare-ingest.sh <file>` — run standard vs deep (or single vs planned) on one document with a workspace reset in between, and print a comparison table.
+
+### Open — small, no design needed
+
+- `scripts/ws-sync-schema.sh`: copy `workspace-template/90_wiki/SCHEMA.md` into the workspace when the template changes (with a check mode).
+- Robustness minors deferred by the v1 final review (none affect correctness on current data):
+  - `frontmatter`: an empty frontmatter block (`---\n---\n`) is not matched; `yaml.dump` folds values over 80 chars (`width=inf`); `dump()` with empty meta writes `{}`.
+  - `vault`: a root-level `_cluster.md` raises; a dotted last path component (`notes/v1.2`) gets no `.md` appended; `broken_links` mixes resolved paths and raw wikilink names; path-style wikilinks (`[[10_ai/x]]`) unresolved; fences inside blockquotes and multi-line code spans not stripped.
+  - `index_cli`: include directory mtimes in staleness (deletes and renames); friendly message for a missing vault path.
+  - `intake`: remove a partial companion on write failure; test the inbox-move branch of rollback; original/companion stems can diverge on collision; `input` absolute for non-md inbox items; share `CLUSTER_RE` instead of duplicating it; non-string scalar `tags` in raw notes; inbox duplicates re-reported every run.
+  - `map_json`: dedupe link edges; tolerate scalar `sources:`.
+  - `sources`: query string dropped from URL slugs; unbounded `resp.read()`, per-operation timeout.
+  - Tests: `--no-index` and exit-0-on-duplicate for `zen-intake`; KINDS order and empty-vault render for `index_md`; PK magic check / uppercase suffix / no-title HTML for `extract`.
+
+### Known deviations from this spec
 
 - DOI resolution fetches the landing page only; there is no free-PDF lookup.
 - An explicit `.md` path given to intake from outside the inbox is treated as an original with a companion rather than filed as a note.
 - `zen-intake vault/00_inbox` as a folder spec runs the file path, not inbox mode; use `zen-intake` with no arguments.
-- arXiv companions are titled by their id when the PDF carries no metadata title; `/zen-ingest` sets the real title on first ingest.
-- A URL whose fetch failed is reported `duplicate` on re-run (against its `snapshot: missing` companion); use `zen-intake --retry-missing`.
+- arXiv companions are titled by their id when the PDF carries no metadata title; ingest sets the real title.
 - Deleting or renaming a vault file does not mark the index stale (`--check` compares file mtimes only).
-
-Planned additions:
-
-- **Done in v1.1: `zen-move <vault-path> --cluster <id>`, and `zen-move --rename-cluster <old> <new>` for a whole cluster** (`tools/src/zen/move.py`, `/zen-move` skill) — re-cluster a document after a wrong filing decision. Deterministic, one atomic step: `git mv` the companion and its original together (`source.local` stays valid because it is cluster-relative); rewrite every inbound link in the vault (the scanner already knows them); patch the wiki source page's `sources:` entry and its back-link (and rename `sources/<stem>-<cluster>.md` if the collision rule had applied); regenerate the index; refresh qmd. Refuses if the target cluster does not exist or the move would leave a broken link. Does **not** bump `updated` (a move is not a content change and must not enter the wiki-behind queue); logs a `move` entry in `LOG.md`. This is the one tool other than `/zen-ingest` allowed to write under `90_wiki/`, limited to path rewrites — §7 and `SCHEMA.md` need that exception stated.
-- **Done in v1.1:** `zen-intake --retry-missing` — re-fetch companions flagged `snapshot: missing` in place instead of reporting `duplicate`.
-- **Done in v1.1:** `zen-intake --recapture <path>` (snapshot replaced in place, earlier version kept by the workspace git history, Summary cleared so re-ingest rewrites it) — deliberate re-capture of a changed web page as a new `captured` date on the same companion.
-- arXiv title lookup via the arXiv API at intake (one extra fetch) so companions never carry a bare id as title.
-- `/zen-ask` may read qmd chunk snippets instead of file-level hits for long PDFs (noted in §7).
-- **Model selection per task.** v1 names no model anywhere: `/zen-ingest`'s per-file subagent inherits the session model, and the session model is whatever the user last picked. Two places spend tokens and they have different needs:
-  - *Ingest* (condense, cross-link, detect contradictions) is judgment-heavy and runs unattended per file — it should default to the most capable model.
-  - *Ask* (walk the ladder, read one file, answer) is small-context and interactive — the session's model is fine.
-  - Intake, index and note need no model at all.
-
-  **Done in v1.1**, with the baseline taken from `docs/benchmarks/2026-10-15-ingest-model-comparison.md` rather than "most capable for everything": two versioned project agents, `.claude/agents/zen-ingester.md` (mid-tier; routine first ingests) and `.claude/agents/zen-ingester-deep.md` (premium; extracted text > 50 KB, re-ingests, syntheses, or `--deep`). `/zen-ingest` applies that routing rule per file and dispatches the chosen agent; `--model <name>` overrides for one run; the model lives in the agent file's `model:` line for the project; `/zen-ask` runs on the session model. `CLAUDE.md` carries the "Model baseline" table. The SCHEMA text is still passed at dispatch (not baked into the agent) so it stays in sync with the workspace's `SCHEMA.md`. Still open: whether a cheaper model suffices for mechanical re-ingests of restamped files — measure before changing the rule.
-
-Ask cost — from benchmark run 1 (`docs/benchmarks/BENCHMARK-2026-10-15.md`): `/zen-ask` spent 460k tokens against 267k for a plain session on the same question. The vault reads were cheap (~14k); the cost is the number of model calls — each re-reads ~88k tokens of standing session instructions. Priority item:
-
-- **`zen-ask-prep "<question>"`** — one deterministic call that runs the stale check (re-indexing if needed), prints `vault/INDEX.md`, the wiki `INDEX.md` and the top qmd hits with snippets. The ladder becomes prep → open one file → answer: three calls instead of six. Keep the ladder's order and the "exactly one file" rule; only the number of round trips changes. Re-run the benchmark afterwards.
-- Session overhead (the 88k) is Claude Code plugins/MCP servers, not ZEN; document a slim session profile for ZEN work.
-
-Ingest time — from the 6-minute reference ingest (`docs/benchmarks/REFERENCE.md`): output generation and per-call latency dominate, not input size.
-
-- Model routing per the comparison: mid-tier for routine first ingests, premium for long/numeric documents, re-ingests and syntheses (see model selection above).
-- **Done in v1.1 (planned ingest):** planner + `zen-plan check` + parallel `zen-page-writer`s + `zen-plan finish`, for inputs over 20 KB of extracted text; not yet measured. Original idea — plan-then-parallel: a planner reads the source once and emits the page list with each page's claims and link targets (names fixed up front, contradiction check stays here because it is the only pass that sees everything); N writers then run concurrently with only their claims plus SCHEMA. Wall time ≈ planner + slowest writer instead of the sum.
-- SCHEMA thresholds for entity pages (e.g. ≥ 3 claims or cited by ≥ 2 topics; otherwise a line on the topic page) to cut page count ~30 % and fragmentation.
-- Background queue: `/zen-ingest` dispatches per-file subagents in the background and reports when done.
-- Section-wise ingest only for very long documents (> ~60k tokens): split on `## ` headings, one subagent per section, one synthesis pass.
-- `ws-sync-schema.sh`: copy `workspace-template/90_wiki/SCHEMA.md` into the workspace when the template's SCHEMA changes.
-
-Robustness minors deferred by the final review (none affect correctness on current data):
-
-- `frontmatter`: an empty frontmatter block (`---\n---\n`) is not matched; `yaml.dump` folds values over 80 chars (`width=inf`); `dump()` with empty meta writes `{}`.
-- `vault`: a root-level `_cluster.md` raises; a dotted last path component (`notes/v1.2`) gets no `.md` appended; `broken_links` mixes resolved paths and raw wikilink names; path-style wikilinks (`[[10_ai/x]]`) unresolved; fences inside blockquotes and multi-line code spans not stripped; add a `bad-frontmatter`-style health kind for unreadable files.
-- `index_cli`: include directory mtimes in staleness; friendly message for a missing vault path.
-- `intake`: remove a partial companion on write failure; test the inbox-move branch of rollback; original/companion stems can diverge on collision; `input` absolute for non-md inbox items; share `CLUSTER_RE` instead of duplicating it; non-string scalar `tags` in raw notes; inbox duplicates re-reported every run.
-- `map_json`: dedupe link edges; tolerate scalar `sources:`.
-- `sources`: query string dropped from URL slugs; unbounded `resp.read()`, per-operation timeout.
-- Tests: `--no-index` and exit-0-on-duplicate for `zen-intake`; KINDS order and empty-vault render for `index_md`; PK magic check / uppercase suffix / no-title HTML for `extract`.
