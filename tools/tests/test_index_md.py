@@ -60,3 +60,18 @@ def test_space_in_path_uses_angle_brackets(vault: Path):
     write(vault / "10_ai" / "with space.md", "---\ntitle: T\ntype: note\nupdated: 2026-10-09T00:00:00+02:00\ntags: [pinned]\n---\nx\n")
     out = render(vault)
     assert "- [T](<10_ai/with space.md>) — pinned · updated 2026-10-09" in out
+
+
+def test_health_sections_follow_kinds_order(vault: Path):
+    out = render(vault)
+    headings = [l[4:] for l in out.split("## Health", 1)[1].splitlines() if l.startswith("### ")]
+    assert headings == sorted(headings, key=health.KINDS.index)
+
+
+def test_empty_vault_renders(tmp_path: Path):
+    v = tmp_path / "vault"
+    (v / "10_ai").mkdir(parents=True)
+    s = vt.scan(v)
+    out = index_md.render(s, health.check(s, NOW), NOW)
+    assert "0 notes · 0 companions · 0 originals · 0 wiki pages · 0 open conflicts" in out
+    assert "No wiki pages yet." in out and "Clean." in out

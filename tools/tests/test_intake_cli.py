@@ -26,3 +26,18 @@ def test_folder_spec_expands_sorted_skipping_dotfiles(vault: Path, tmp_path: Pat
     assert intake_cli.main([str(d), "--cluster", "10_ai", "--vault", str(vault), "--no-index"]) == 0
     out = capsys.readouterr().out
     assert "filed: 2" in out and out.index("a.html") < out.index("b.html")
+
+
+def test_no_index_leaves_index_untouched(vault: Path, tmp_path: Path):
+    before = (vault / "INDEX.md").read_bytes()
+    src = tmp_path / "n.html"; src.write_text("<p>n</p>", encoding="utf-8")
+    assert intake_cli.main([str(src), "--cluster", "10_ai", "--vault", str(vault), "--no-index"]) == 0
+    assert (vault / "INDEX.md").read_bytes() == before
+
+
+def test_duplicate_and_inbox_exit_zero(vault: Path, tmp_path: Path):
+    src = tmp_path / "d.html"; src.write_text("<p>d</p>", encoding="utf-8")
+    assert intake_cli.main([str(src), "--cluster", "10_ai", "--vault", str(vault), "--no-index"]) == 0
+    assert intake_cli.main([str(src), "--cluster", "10_ai", "--vault", str(vault), "--no-index"]) == 0  # duplicate
+    other = tmp_path / "e.html"; other.write_text("<p>e</p>", encoding="utf-8")
+    assert intake_cli.main([str(other), "--vault", str(vault), "--no-index"]) == 0  # lands in inbox
