@@ -42,6 +42,12 @@ conflicts:
     b: {claim: "<new statement>", source: sources/x.md, captured: 2026-10-14}
 ```
 
+**Section mode (books).** If the dispatch includes a `section` block, you plan only that section of a long input:
+- Read only the input lines in `section.lines` (and the wiki pages they touch). Every `source_lines` range must lie inside them.
+- Copy the `section` block into the plan as given, and add `section_summary`: one paragraph on what this section contains, for the book's source page.
+- `source_page.path` is `sources/<input stem>.md` and `source_page.title` the companion's title, the same in every section. Set `source_page.body` and `summary` to null — except in the **last** section (`index == count`): there, use the earlier sections' summaries you were given plus your own section to write `summary` (3–6 lines for the companion) and `source_page.body` (a short introduction to the whole book; the per-section paragraphs are added by `zen-plan finish`).
+- Pages created by earlier sections are existing pages now: plan `update`, not `create`.
+
 7. Run `(cd tools && uv run zen-plan check <plan path> --vault ../vault)` and fix the plan until it prints `plan ok`.
 
 Never write or edit anything under `vault/`. Do not dispatch subagents. Reply with ONLY: the plan path, the number of pages (create/update), the conflict ids, or an error.

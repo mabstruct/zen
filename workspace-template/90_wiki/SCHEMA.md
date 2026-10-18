@@ -95,6 +95,8 @@ For inputs over 20 KB of extracted text, `/zen-ingest` splits the procedure abov
 - **Page writers** run in parallel, about six pages each. Each reads only its pages' line ranges of the input, writes the claims with citations, and adds the planned links and conflict blocks. Writers never touch the source page, the input, `LOG.md` or `INDEX.md`.
 - `zen-plan finish` writes the single-owner files: the source page, the input's Summary/title/`ingested`, the LOG entry (with `- mode: planned, N pages`), and regenerates this `INDEX.md` from the pages on disk.
 
+**Sectioned ingest (books, over 250 KB of extracted text).** `zen-plan sections` cuts the input into sections from its page markers and running heads; the user approves the map. Each section then runs the planned ingest above, in order, restricted to its line range; later sections update pages that earlier ones created. The book has one source page, assembled by `zen-plan finish` from a paragraph per section; each section logs its own entry (`ingest <input> (section k/N: <title>)`); the input is stamped `ingested` only after the last section.
+
 ## LOG.md entry format
 
 The heading word is `ingest`, or `re-ingest` for a re-ingest.
