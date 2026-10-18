@@ -180,10 +180,27 @@ def main(argv: list[str] | None = None) -> int:
     b = sub.add_parser("batches", help="print writer batches, one line of page paths per batch")
     b.add_argument("plan", type=Path)
     b.add_argument("--size", type=int, default=6)
+    sx = sub.add_parser("sections", help="write a section map for a long companion (book ingest)")
+    sx.add_argument("input", help="vault-relative companion path")
+    sx.add_argument("--vault", type=Path, default=Path("vault"))
+    sx.add_argument("--max-tokens", type=int, default=30000)
+    sx.add_argument("--out", type=Path, required=True)
     f = sub.add_parser("finish", help="write source page, companion stamp, LOG entry and wiki INDEX")
     f.add_argument("plan", type=Path)
     f.add_argument("--vault", type=Path, default=Path("vault"))
     a = ap.parse_args(argv)
+    if a.cmd == "sections":
+        from . import sections
+        secs = sections.build((a.vault / a.input).read_text(encoding="utf-8"), max_tokens=a.max_tokens)
+        data = {"input": a.input, "max_tokens": a.max_tokens, "sections": [
+            {"index": i, "title": x.title, "pages": [x.first_page, x.last_page] if x.first_page else None,
+             "lines": [x.start_line, x.end_line], "tokens": x.tokens} for i, x in enumerate(secs, 1)]}
+        a.out.parent.mkdir(parents=True, exist_ok=True)
+        a.out.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8")
+        for x in data["sections"]:
+            pg = f"p{x['pages'][0]}-{x['pages'][1]}" if x["pages"] else "-"
+            print(f"{x['index']}. {pg:>10} {x['tokens']:>7,} tokens  lines {x['lines'][0]}-{x['lines'][1]}  {x['title']}")
+        return 0
     p = load(a.plan)
     if a.cmd == "check":
         errs = check(a.vault, p)
