@@ -255,12 +255,12 @@ Updated 2026-10-18, after v1.1 (PRs #1–#5 merged).
 - **`zen-intake --retry-missing` / `--recapture <path>`** — refresh a companion in place; earlier snapshots live in the workspace git history; recapture clears Summary so re-ingest rewrites it.
 - **Planned ingest** — for extracted text > 20 KB: a planner writes a thin plan (pages, briefs, source line ranges, links, conflicts), `zen-plan check` validates it, `zen-page-writer`s write claims in parallel, `zen-plan finish` writes the single-owner files. ~9¼ min vs ~14 min on a 79 KB document: `docs/benchmarks/2026-10-15-planned-ingest.md`.
 - **`scripts/ws-sync-schema.sh`** (`zen-sync-schema`) — copies the template's SCHEMA into the workspace; `--check` reports drift; refuses to overwrite uncommitted workspace edits without `--force`.
+- **Entity threshold** in SCHEMA — an entity gets a page only with ≥ 3 claims from the input; fewer → a line on the topic page. Measured first: all 26 existing entity pages already had ≥ 3 claims, so the rule codifies current behaviour and changes no page; stricter cut-offs were rejected because entity pages are the wiki's lookup targets for "who was …" questions.
 - **Robustness pass** (the v1 final review's deferred minors): empty frontmatter blocks, unfolded long values, root `_cluster.md`, dotted link targets, path-style wikilinks, fences in blockquotes, deletes and renames marking the index stale, no partial companion on failure, one stem for original and companion, inbox duplicates moved to `00_inbox/_duplicates/`, one map edge per relation, query strings in URL slugs, downloads capped at 200 MB / 300 s, plus the missing tests.
 - Fixes found on the way: HTML `<title>` crashed intake (BeautifulSoup string in YAML); one bad frontmatter no longer stops the indexer or intake (`bad-frontmatter` health kind); `source.local` containment when filing inbox companions; links and conflict markers inside code are ignored; companions start with a `# <title>` heading.
 
 ### Open — needs a design decision first
 
-- **Entity page threshold** in SCHEMA (e.g. ≥ 3 claims or cited by ≥ 2 topics; otherwise a line on the topic page). Large ingests produced 9–15 entity pages per document, many thin.
 - **Section-wise ingest** for very long documents (> ~60k tokens, i.e. books): split on headings, plan per section, one synthesis pass.
 - **Standard-model planner** for the planned path — the deep planner is now the only sequential step; measure before switching.
 - Cheaper model for mechanical re-ingests of restamped files — measure before changing the rule.

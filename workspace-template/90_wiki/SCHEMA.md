@@ -11,6 +11,8 @@ Read this before every wiki operation. Humans never edit this folder; only `/zen
 | wiki-entity | entities/ | person, project, tool, organisation | what it is, why it matters here, links to topics and sources |
 | wiki-synthesis | syntheses/ | theme where ≥ 3 sources converge | argument across topics; written only when the threshold is met |
 
+Entity threshold: an entity gets its own page only when the input makes at least 3 claims about it. An entity named with fewer claims is a line on the topic page that mentions it (with its citation), not a page of its own. When a later input brings it to 3 or more claims, create the page then and move those lines over. An existing entity page is never deleted for falling below the threshold.
+
 Filenames: a `sources/` page is named after the input's vault filename stem, e.g. input `10_ai/1706.03762.md` → `sources/1706.03762.md`. If `sources/<stem>.md` already exists and its `sources:` names a different input, use `sources/<stem>-<cluster>.md` (e.g. `notes-11_research.md`). `topics/`, `entities/` and `syntheses/` pages use the slug of their own title: lowercase ASCII (strip diacritics), words joined by single hyphens, no other punctuation, at most 80 characters, e.g. `topics/attention-mechanism.md`.
 
 Frontmatter (`tags` optional):
