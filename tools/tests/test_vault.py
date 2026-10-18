@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from conftest import write
 from zen import vault as vt
 
 
@@ -124,3 +125,33 @@ def test_bad_frontmatter_and_numeric_tags_do_not_crash(vault: Path):
     assert d.title == "Budget thoughts" and d.frontmatter_error and d.frontmatter_error.count("\n") == 0
     assert s.docs["11_research/num.md"].tags == ["2024"]
     assert s.docs["11_research/num.md"].frontmatter_error is None
+
+
+def test_root_level_cluster_md_is_ignored(vault: Path):
+    write(vault / "_cluster.md", "stray description\n")
+    vt.scan(vault)
+
+
+def test_dotted_link_target_resolves_to_md_file(vault: Path):
+    write(vault / "11_research" / "notes-v1.2.md", "---\ntitle: V12\ntype: note\n---\nx\n")
+    write(vault / "11_research" / "ref.md", "---\ntitle: Ref\ntype: note\n---\nsee [v](notes-v1.2)\n")
+    s = vt.scan(vault)
+    assert "11_research/notes-v1.2.md" in s.docs["11_research/ref.md"].links
+    assert not any(src == "11_research/ref.md" for src, _ in s.broken_links)
+
+
+def test_path_style_and_md_suffixed_wikilinks_resolve(vault: Path):
+    write(vault / "11_research" / "wl.md", "---\ntitle: WL\ntype: note\n---\n[[10_ai/attention]] and [[orphan.md]]\n")
+    s = vt.scan(vault)
+    assert {"10_ai/attention.md", "11_research/orphan.md"} <= set(s.docs["11_research/wl.md"].links)
+
+
+def test_broken_wikilinks_are_reported_in_brackets(vault: Path):
+    write(vault / "11_research" / "wl.md", "---\ntitle: WL\ntype: note\n---\n[[No Such Page]]\n")
+    assert ("11_research/wl.md", "[[No Such Page]]") in vt.scan(vault).broken_links
+
+
+def test_fence_inside_blockquote_is_stripped(vault: Path):
+    write(vault / "11_research" / "bq.md", "---\ntitle: BQ\ntype: note\n---\n> ```\n> [x](ghost.md)\n> ```\n")
+    s = vt.scan(vault)
+    assert s.docs["11_research/bq.md"].links == []
