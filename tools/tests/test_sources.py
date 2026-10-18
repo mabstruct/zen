@@ -110,3 +110,44 @@ def test_classify_existing_relative_path_is_file(tmp_path: Path, monkeypatch):
 def test_resolve_bad_fetcher_shape_raises():
     with pytest.raises(ValueError):
         src.resolve("https://example.com/a", fetch=lambda u: b"just bytes")
+
+
+def test_url_query_string_is_part_of_the_slug():
+    a = src.resolve("https://example.com/page?id=1", fetch=lambda u: (b"<p>1</p>", "text/html"))
+    b = src.resolve("https://example.com/page?id=2", fetch=lambda u: (b"<p>2</p>", "text/html"))
+    assert a.filename != b.filename
+    assert a.filename == "example-com-page-id-1.html"
+
+
+def test_default_fetch_refuses_oversized_bodies(monkeypatch):
+    class Resp:
+        headers = {"Content-Type": "application/pdf"}
+        def __init__(self): self.left = 5
+        def read(self, n=-1):
+            if self.left <= 0:
+                return b""
+            self.left -= 1
+            return b"x" * 1024
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+
+    monkeypatch.setattr(src.urllib.request, "urlopen", lambda req, timeout: Resp())
+    monkeypatch.setattr(src, "MAX_BYTES", 3000)
+    with pytest.raises(ValueError, match="larger than"):
+        src.default_fetch("https://example.com/big.pdf")
+
+
+def test_default_fetch_has_an_overall_deadline(monkeypatch):
+    clock = iter([0.0, 0.0, 100.0, 200.0])
+
+    class Resp:
+        headers = {"Content-Type": "text/html"}
+        def read(self, n=-1): return b"x" * 10
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+
+    monkeypatch.setattr(src.urllib.request, "urlopen", lambda req, timeout: Resp())
+    monkeypatch.setattr(src.time, "monotonic", lambda: next(clock))
+    monkeypatch.setattr(src, "DEADLINE_S", 50)
+    with pytest.raises(TimeoutError):
+        src.default_fetch("https://example.com/slow")

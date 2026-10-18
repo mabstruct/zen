@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+import time
 import unicodedata
 import urllib.request
 from dataclasses import dataclass
@@ -15,6 +16,8 @@ _ARXIV_ID = r"(\d{4}\.\d{4,5}(?:v\d+)?|[a-z-]+(?:\.[A-Z]{2})?/\d{7}(?:v\d+)?)"
 ARXIV_URL_RE = re.compile(r"^https?://(?:[a-z]+\.)?arxiv\.org/(?:abs|pdf)/" + _ARXIV_ID + r"(?:\.pdf)?/?(?:[?#].*)?$", re.I)
 ARXIV_BARE_RE = re.compile(r"^(?:arxiv:)?" + _ARXIV_ID + r"$", re.I)
 DOI_RE = re.compile(r"^(?:https?://(?:dx\.)?doi\.org/|doi:)?(10\.\d{4,9}/\S+)$", re.I)
+MAX_BYTES = 200 * 1024 * 1024
+DEADLINE_S = 300
 USER_AGENT = "zen-intake/0.1 (+https://github.com/mabstruct/zen)"
 PDF_TYPES = ("application/pdf", "application/x-pdf")
 
@@ -63,8 +66,21 @@ def sha256(data: bytes) -> str:
 
 def default_fetch(url: str) -> tuple[bytes, str]:
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/pdf, text/html;q=0.9, */*;q=0.5"})
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        return resp.read(), resp.headers.get("Content-Type", "") or ""
+    start = time.monotonic()
+    chunks: list[bytes] = []
+    size = 0
+    with urllib.request.urlopen(req, timeout=60) as resp:  # timeout is per socket operation
+        while True:
+            if time.monotonic() - start > DEADLINE_S:
+                raise TimeoutError(f"download took longer than {DEADLINE_S} s")
+            chunk = resp.read(1 << 16)
+            if not chunk:
+                break
+            size += len(chunk)
+            if size > MAX_BYTES:
+                raise ValueError(f"download larger than {MAX_BYTES // (1 << 20)} MB")
+            chunks.append(chunk)
+        return b"".join(chunks), resp.headers.get("Content-Type", "") or ""
 
 
 def _ext_for(content_type: str, fallback: str) -> str:
@@ -82,7 +98,8 @@ def _ext_for(content_type: str, fallback: str) -> str:
 
 def _url_slug(url: str) -> str:
     u = urlparse(url)
-    return _slug_stem((u.netloc + u.path).rstrip("/") or u.netloc)
+    base = (u.netloc + u.path).rstrip("/") or u.netloc
+    return _slug_stem(f"{base}-{u.query}" if u.query else base)
 
 
 def resolve(spec: str, fetch: Fetcher = default_fetch) -> Resolved:

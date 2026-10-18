@@ -33,3 +33,18 @@ def test_json_serialisable_and_sorted(vault: Path):
     m = map_json.build(vt.scan(vault), NOW)
     json.dumps(m)
     assert [n["id"] for n in m["nodes"]] == sorted(n["id"] for n in m["nodes"])
+
+
+def test_duplicate_links_give_one_edge(vault: Path):
+    m = map_json.build(vt.scan(vault), NOW)
+    edges = [(e["from"], e["to"], e["kind"]) for e in m["edges"]]
+    assert len(edges) == len(set(edges))
+    assert edges.count(("11_research/linker.md", "10_ai/my note.md", "link")) == 1
+
+
+def test_scalar_sources_is_one_wiki_edge(vault: Path):
+    from conftest import write
+    write(vault / "90_wiki" / "topics" / "single.md",
+          "---\ntitle: Single\ntype: wiki-topic\nsources: 10_ai/attention.md\nconfidence: low\n---\nx\n")
+    m = map_json.build(vt.scan(vault), NOW)
+    assert ("90_wiki/topics/single.md", "10_ai/attention.md", "wiki") in {(e["from"], e["to"], e["kind"]) for e in m["edges"]}
