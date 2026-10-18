@@ -15,6 +15,7 @@ zen-intake = "zen.intake_cli:main"
 zen-ask-prep = "zen.ask_prep:main"
 zen-move = "zen.move:main"
 zen-plan = "zen.ingest_plan:main"
+zen-sync-schema = "zen.sync_schema:main"
 
 [dependency-groups]
 dev = ["pytest>=8", "python-docx>=1.1"]
