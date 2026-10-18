@@ -254,6 +254,7 @@ Updated 2026-10-18, after v1.1 (PRs #1–#5 merged).
 - **`zen-move`** — re-file a note or companion into another cluster (`<path> --cluster <id>`) or rename a whole cluster (`--rename-cluster <old> <new>`). Moves files and originals, rewrites links and wiki `sources:`, logs a `move` entry, never bumps `updated`, rolls back on a new broken link. The one path-only writer under `90_wiki/` besides ingest (stated in §7 and SCHEMA).
 - **`zen-intake --retry-missing` / `--recapture <path>`** — refresh a companion in place; earlier snapshots live in the workspace git history; recapture clears Summary so re-ingest rewrites it.
 - **Planned ingest** — for extracted text > 20 KB: a planner writes a thin plan (pages, briefs, source line ranges, links, conflicts), `zen-plan check` validates it, `zen-page-writer`s write claims in parallel, `zen-plan finish` writes the single-owner files. ~9¼ min vs ~14 min on a 79 KB document: `docs/benchmarks/2026-10-15-planned-ingest.md`.
+- **`scripts/ws-sync-schema.sh`** (`zen-sync-schema`) — copies the template's SCHEMA into the workspace; `--check` reports drift; refuses to overwrite uncommitted workspace edits without `--force`.
 - Fixes found on the way: HTML `<title>` crashed intake (BeautifulSoup string in YAML); one bad frontmatter no longer stops the indexer or intake (`bad-frontmatter` health kind); `source.local` containment when filing inbox companions; links and conflict markers inside code are ignored; companions start with a `# <title>` heading.
 
 ### Open — needs a design decision first
@@ -270,7 +271,6 @@ Updated 2026-10-18, after v1.1 (PRs #1–#5 merged).
 
 ### Open — small, no design needed
 
-- `scripts/ws-sync-schema.sh`: copy `workspace-template/90_wiki/SCHEMA.md` into the workspace when the template changes (with a check mode).
 - Robustness minors deferred by the v1 final review (none affect correctness on current data):
   - `frontmatter`: an empty frontmatter block (`---\n---\n`) is not matched; `yaml.dump` folds values over 80 chars (`width=inf`); `dump()` with empty meta writes `{}`.
   - `vault`: a root-level `_cluster.md` raises; a dotted last path component (`notes/v1.2`) gets no `.md` appended; `broken_links` mixes resolved paths and raw wikilink names; path-style wikilinks (`[[10_ai/x]]`) unresolved; fences inside blockquotes and multi-line code spans not stripped.
