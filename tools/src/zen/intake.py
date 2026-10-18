@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-import re
 import shutil
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 
 from . import frontmatter as fm, sources
 from .extract import extract
-from .vault import scan
+from .vault import CLUSTER_NAME_RE, scan
 
 LARGE_BYTES = 50 * 1024 * 1024
 INBOX = "00_inbox"
+DUPLICATES = "_duplicates"
 
 
 @dataclass
@@ -40,7 +40,7 @@ class Report:
 def _target_dir(vault: Path, cluster: str | None) -> tuple[Path, str] | str:
     if cluster is None:
         return vault / INBOX, "inbox"
-    if not re.fullmatch(r"1\d_[^/\\]+", cluster) or not (vault / cluster).is_dir():
+    if not CLUSTER_NAME_RE.fullmatch(cluster) or not (vault / cluster).is_dir():
         return f"unknown cluster: {cluster}"
     return vault / cluster, "filed"
 
@@ -54,6 +54,16 @@ def _free(path: Path) -> Path:
         if not cand.exists():
             return cand
         n += 1
+
+
+def _free_pair(target_dir: Path, filename: str) -> tuple[Path, Path]:
+    """Original and companion paths that share one stem and are both free."""
+    stem, suffix = PurePosixPath(filename).stem, PurePosixPath(filename).suffix
+    n, cand = 1, stem
+    while (target_dir / "_originals" / f"{cand}{suffix}").exists() or (target_dir / f"{cand}.md").exists():
+        n += 1
+        cand = f"{stem}-{n}"
+    return target_dir / "_originals" / f"{cand}{suffix}", target_dir / f"{cand}.md"
 
 
 def _known(vault: Path) -> tuple[dict[str, str], dict[str, str]]:
@@ -104,7 +114,7 @@ def intake_item(vault: Path, spec: str, cluster: str | None, *, fetch=sources.de
         dup = by_hash.get(h)
         if dup:
             return ItemResult(spec, "duplicate", companion=dup, note="same content already in vault")
-        orig_path = _free(target_dir / "_originals" / res.filename)
+        orig_path, comp_path = _free_pair(target_dir, res.filename)
         orig_path.parent.mkdir(parents=True, exist_ok=True)
         src_path = Path(spec) if res.kind == "file" else None
         moved = bool(src_path and src_path.resolve().is_relative_to(vault / INBOX))
@@ -125,9 +135,9 @@ def intake_item(vault: Path, spec: str, cluster: str | None, *, fetch=sources.de
             meta["title"] = ex.title or _heading(ex.markdown) or stem
             body_text = ex.markdown
             original_rel = orig_path.relative_to(vault).as_posix()
-            comp_path = _free(target_dir / f"{stem}.md")
             fm.write(comp_path, fm.Document(meta, f"# {meta['title']}\n\n## Summary\n\n## Extracted text\n" + body_text))
         except Exception as e:
+            comp_path.unlink(missing_ok=True)
             if moved:
                 shutil.move(str(orig_path), src_path)
             else:
@@ -156,7 +166,12 @@ def _normalise_note(path: Path, now: str) -> tuple[fm.Document, str | None]:
     doc = fm.read(path)
     cluster = doc.meta.pop("cluster", None)
     tags = doc.meta.get("tags")
-    doc.meta["tags"] = [tags] if isinstance(tags, str) else [str(t) for t in (tags or [])]
+    if tags is None:
+        doc.meta["tags"] = []
+    elif isinstance(tags, list):
+        doc.meta["tags"] = [str(t) for t in tags]
+    else:
+        doc.meta["tags"] = [str(tags)]
     doc.meta.setdefault("title", _heading(doc.body) or path.stem)
     doc.meta.setdefault("type", "note")
     doc.meta.setdefault("created", now)
@@ -214,7 +229,14 @@ def intake_inbox(vault: Path, cluster: str | None, *, fetch=sources.default_fetc
                 else:
                     report.items.append(ItemResult(rel, "filed", companion=_file_note(vault, path, doc, target_dir)))
             else:
-                report.items.append(intake_item(vault, str(path), cluster, fetch=fetch, now=now, known=known))
+                r = intake_item(vault, str(path), cluster, fetch=fetch, now=now, known=known)
+                r.input = rel
+                if r.status == "duplicate" and path.exists():
+                    aside = _free(inbox / DUPLICATES / path.name)
+                    aside.parent.mkdir(exist_ok=True)
+                    shutil.move(str(path), aside)
+                    r.note = f"{r.note}; moved to {aside.relative_to(vault).as_posix()}"
+                report.items.append(r)
         except Exception as e:
             report.items.append(ItemResult(rel, "failed", note=f"{type(e).__name__}: {e}"))
     return report

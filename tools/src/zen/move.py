@@ -12,9 +12,8 @@ from urllib.parse import quote, unquote
 
 from . import frontmatter as fm, index_cli
 from .intake import INBOX, _free
-from .vault import FENCE_RE, MD_LINK_RE, TITLE_RE, scan
+from .vault import CLUSTER_NAME_RE, FENCE_RE, MD_LINK_RE, TITLE_RE, scan
 
-CLUSTER_NAME_RE = re.compile(r"1\d_[^/\\]+")
 FM_BLOCK_RE = re.compile(r"\A---\r?\n.*?\r?\n---\r?\n?", re.DOTALL)
 
 

@@ -19,6 +19,7 @@ WIKILINK_RE = re.compile(r"\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]")
 CONFLICT_RE = re.compile(r"^> \[!conflict\] (#c-\d+) — open\s*$", re.M)
 HEADING_RE = re.compile(r"^#\s+(.+?)\s*$", re.M)
 CLUSTER_RE = re.compile(r"^1\d_")
+CLUSTER_NAME_RE = re.compile(r"1\d_[^/\\]+")  # a full cluster folder name; use with fullmatch
 
 
 @dataclass
