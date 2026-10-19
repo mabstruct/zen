@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getGraph } from './data'
 import { owners as buildOwners } from './graph'
 import { GraphView } from './graphView/GraphView'
@@ -15,6 +15,7 @@ export default function App() {
     const p = parseHash(location.hash).path
     return p ? [p] : []
   })
+  const ownersRef = useRef(new Map<string, string>())
   const [open, setOpen] = useState(true)
 
   useEffect(() => {
@@ -25,13 +26,14 @@ export default function App() {
     const onHash = () => {
       const p = parseHash(location.hash).path
       setPath(p)
-      if (p) setTrail(t => pushTrail(t, p))
+      if (p) setTrail(t => pushTrail(t, p, ownersRef.current))
     }
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
 
   const owners = useMemo(() => (graph ? buildOwners(graph) : new Map<string, string>()), [graph])
+  ownersRef.current = owners
   const navigate = useCallback((p: string) => { location.hash = toHash(p) }, [])
   const select = useCallback((x: string) => {
     const node = graph?.nodes.find(n => n.id === (owners.get(x) ?? x))
@@ -54,8 +56,7 @@ export default function App() {
   return (
     <div className="flex h-full">
       <main className="relative min-w-0 flex-1">
-        <GraphView graph={graph} selected={selected} onSelect={select} />
-        <button onClick={reset} className="absolute left-3 top-3 rounded border border-border bg-surface px-2 py-1 text-xs">Reset</button>
+        <GraphView graph={graph} selected={selected} onSelect={select} onReset={reset} />
       </main>
       <aside className={`flex flex-col border-l border-border bg-surface ${open ? 'w-[34rem]' : 'w-10'}`}>
         <button onClick={() => setOpen(o => !o)} aria-label={open ? 'Collapse reader' : 'Expand reader'} className="p-2 text-left text-muted">

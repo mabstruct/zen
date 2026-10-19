@@ -28,7 +28,7 @@ function layout(graph: Graph): { nodes: SNode[]; links: SLink[] } {
   return { nodes, links }
 }
 
-export function GraphView({ graph, selected, onSelect }: { graph: Graph; selected: string | null; onSelect: (id: string) => void }) {
+export function GraphView({ graph, selected, onSelect, onReset }: { graph: Graph; selected: string | null; onSelect: (id: string) => void; onReset?: () => void }) {
   const [hidden, setHidden] = useState<Set<Kind>>(new Set())
   const [labels, setLabels] = useState(true)
   const [colourMode, setColourMode] = useState<'kind' | 'cluster'>('kind')
@@ -73,6 +73,24 @@ export function GraphView({ graph, selected, onSelect }: { graph: Graph; selecte
       )
     })
   })
+
+  const fitTarget = () => {
+    const ns = laid.nodes.filter(n => n.x != null && n.y != null)
+    if (ns.length === 0) return { k: 1, x: 0, y: 0 }
+    const xs = ns.map(n => n.x!), ys = ns.map(n => n.y!)
+    const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys)
+    const pad = 40
+    const k = Math.min(W / (x1 - x0 + 2 * pad), H / (y1 - y0 + 2 * pad), 2)
+    return { k, x: W / 2 - (k * (x0 + x1)) / 2, y: H / 2 - (k * (y0 + y1)) / 2 }
+  }
+
+  useEffect(() => {
+    const svg = svgRef.current, z = zoomRef.current
+    if (!svg || !z) return
+    const f = fitTarget()
+    select(svg).call(z.transform, zoomIdentity.translate(f.x, f.y).scale(f.k))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [laid])
 
   const moveTo = (t: { k: number; x: number; y: number }) => {
     const svg = svgRef.current, z = zoomRef.current
@@ -141,7 +159,7 @@ export function GraphView({ graph, selected, onSelect }: { graph: Graph; selecte
       </svg>
       <Controls
         labels={labels} colourMode={colourMode}
-        onReset={() => { setHidden(new Set()); moveTo({ k: 1, x: 0, y: 0 }) }}
+        onReset={() => { setHidden(new Set()); moveTo(fitTarget()); onReset?.() }}
         onLabels={() => setLabels(v => !v)}
         onColour={() => setColourMode(m => (m === 'kind' ? 'cluster' : 'kind'))}
         onFind={q => { const f = findByTitle(vis.nodes, q); if (f) onSelect(f.id) }}
