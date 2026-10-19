@@ -49,7 +49,11 @@ export function parseHash(hash: string): { path: string | null } {
   }
 }
 
+const ALLOWED_TAGS = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'blockquote', 'pre', 'code', 'em', 'strong', 'del', 'a', 'span', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'hr', 'br', 'details', 'summary']
+const ALLOWED_ATTR = ['href', 'class', 'data-zen-path', 'data-zen-link', 'target', 'rel', 'align', 'start']
+
 export function renderMarkdown(md: string, from: string, owners: Map<string, string>): string {
+  const nonce = Math.random().toString(36).slice(2)
   const marked = new Marked()
   marked.use({
     renderer: {
@@ -58,14 +62,21 @@ export function renderMarkdown(md: string, from: string, owners: Map<string, str
         const inner = this.parser.parseInline(token.tokens)
         switch (target.type) {
           case 'external':
-            return `<a href="${esc(target.href)}" target="_blank" rel="noopener noreferrer">${inner}</a>`
+            return `<a data-zen-link="${nonce}" href="${esc(target.href)}" target="_blank" rel="noopener noreferrer">${inner}</a>`
           case 'node':
-            return `<a href="${esc(toHash(target.path))}" data-zen-path="${esc(target.path)}">${inner}</a>`
+            return `<a data-zen-link="${nonce}" href="${esc(toHash(target.path))}" data-zen-path="${esc(target.path)}">${inner}</a>`
           case 'original':
-            return `<span class="zen-original">${esc(token.text)} (original not included)</span>`
+            return `<span class="zen-original">${inner} (original not included)</span>`
           default:
-            return `<span class="zen-deadlink">${esc(token.text)}</span>`
+            return `<span class="zen-deadlink">${inner}</span>`
         }
+      },
+      image(token: Tokens.Image) {
+        const target = resolveHref(from, token.href, owners)
+        const alt = esc(token.text)
+        return target.type === 'original'
+          ? `<span class="zen-original">${alt} (original not included)</span>`
+          : `<span class="zen-deadlink">${alt}</span>`
       },
       blockquote(token: Tokens.Blockquote) {
         const inner = this.parser.parse(token.tokens)
@@ -76,5 +87,21 @@ export function renderMarkdown(md: string, from: string, owners: Map<string, str
     },
   })
   const html = marked.parse(md, { async: false }) as string
-  return DOMPurify.sanitize(html, { ADD_ATTR: ['target', 'data-zen-path'] })
+  const hook = (node: Element) => {
+    if (node.nodeName !== 'A') return
+    if (node.getAttribute('data-zen-link') === nonce) {
+      node.removeAttribute('data-zen-link')
+      return
+    }
+    const span = node.ownerDocument.createElement('span')
+    span.className = 'zen-deadlink'
+    span.textContent = node.textContent
+    node.replaceWith(span)
+  }
+  DOMPurify.addHook('afterSanitizeAttributes', hook)
+  try {
+    return DOMPurify.sanitize(html, { ALLOWED_TAGS, ALLOWED_ATTR })
+  } finally {
+    DOMPurify.removeHook('afterSanitizeAttributes', hook)
+  }
 }
