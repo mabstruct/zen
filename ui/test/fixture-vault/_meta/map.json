@@ -1,0 +1,234 @@
+{
+ "generated": "2026-10-19T16:20:00+02:00",
+ "nodes": [
+  {
+   "id": "01_daily/2026-10-01.md",
+   "path": "01_daily/2026-10-01.md",
+   "title": "2026-10-01",
+   "type": "daily",
+   "cluster": "01_daily",
+   "tags": [],
+   "size": 153,
+   "created": "2026-10-01T08:00:00+02:00",
+   "updated": "2026-10-01T08:00:00+02:00",
+   "captured": null,
+   "ingested": null,
+   "confidence": null,
+   "conflicts": []
+  },
+  {
+   "id": "10_ai/_originals/attn.pdf",
+   "path": "10_ai/_originals/attn.pdf",
+   "title": "attn.pdf",
+   "type": "original",
+   "cluster": "10_ai",
+   "tags": [],
+   "size": 17,
+   "created": null,
+   "updated": null,
+   "captured": null,
+   "ingested": null,
+   "confidence": null,
+   "conflicts": []
+  },
+  {
+   "id": "10_ai/attn.md",
+   "path": "10_ai/attn.md",
+   "title": "Attention Is All You Need",
+   "type": "companion",
+   "cluster": "10_ai",
+   "tags": [],
+   "size": 735,
+   "created": "2026-10-15T00:30:21+02:00",
+   "updated": "2026-10-15T00:55:25+02:00",
+   "captured": "2026-10-15T00:30:21+02:00",
+   "ingested": "2026-10-15T00:55:25+02:00",
+   "confidence": null,
+   "conflicts": []
+  },
+  {
+   "id": "11_research/idea note.md",
+   "path": "11_research/idea note.md",
+   "title": "Idea note",
+   "type": "note",
+   "cluster": "11_research",
+   "tags": [],
+   "size": 181,
+   "created": "2026-10-17T10:00:00+02:00",
+   "updated": "2026-10-17T10:00:00+02:00",
+   "captured": null,
+   "ingested": null,
+   "confidence": null,
+   "conflicts": []
+  },
+  {
+   "id": "11_research/rnn.md",
+   "path": "11_research/rnn.md",
+   "title": "Recurrent Networks Revisited",
+   "type": "companion",
+   "cluster": "11_research",
+   "tags": [],
+   "size": 580,
+   "created": "2026-10-16T09:00:00+02:00",
+   "updated": "2026-10-16T09:30:00+02:00",
+   "captured": "2026-10-16T09:00:00+02:00",
+   "ingested": "2026-10-16T09:30:00+02:00",
+   "confidence": null,
+   "conflicts": []
+  },
+  {
+   "id": "90_wiki/entities/jurgen-schmidhuber.md",
+   "path": "90_wiki/entities/jurgen-schmidhuber.md",
+   "title": "Jürgen Schmidhuber",
+   "type": "wiki-entity",
+   "cluster": "90_wiki",
+   "tags": [],
+   "size": 262,
+   "created": "2026-10-17T09:20:00+02:00",
+   "updated": "2026-10-17T09:20:00+02:00",
+   "captured": null,
+   "ingested": null,
+   "confidence": "low",
+   "conflicts": []
+  },
+  {
+   "id": "90_wiki/entities/vaswani.md",
+   "path": "90_wiki/entities/vaswani.md",
+   "title": "Vaswani",
+   "type": "wiki-entity",
+   "cluster": "90_wiki",
+   "tags": [],
+   "size": 248,
+   "created": "2026-10-17T09:30:00+02:00",
+   "updated": "2026-10-17T09:30:00+02:00",
+   "captured": null,
+   "ingested": null,
+   "confidence": "low",
+   "conflicts": []
+  },
+  {
+   "id": "90_wiki/sources/attn.md",
+   "path": "90_wiki/sources/attn.md",
+   "title": "Attention Is All You Need",
+   "type": "wiki-source",
+   "cluster": "90_wiki",
+   "tags": [],
+   "size": 306,
+   "created": "2026-10-15T09:10:00+02:00",
+   "updated": "2026-10-15T09:10:00+02:00",
+   "captured": null,
+   "ingested": null,
+   "confidence": "high",
+   "conflicts": []
+  },
+  {
+   "id": "90_wiki/sources/rnn.md",
+   "path": "90_wiki/sources/rnn.md",
+   "title": "Recurrent Networks Revisited",
+   "type": "wiki-source",
+   "cluster": "90_wiki",
+   "tags": [],
+   "size": 322,
+   "created": "2026-10-16T09:40:00+02:00",
+   "updated": "2026-10-16T09:40:00+02:00",
+   "captured": null,
+   "ingested": null,
+   "confidence": "high",
+   "conflicts": []
+  },
+  {
+   "id": "90_wiki/topics/attention.md",
+   "path": "90_wiki/topics/attention.md",
+   "title": "Attention",
+   "type": "wiki-topic",
+   "cluster": "90_wiki",
+   "tags": [],
+   "size": 818,
+   "created": "2026-10-17T09:10:00+02:00",
+   "updated": "2026-10-17T09:10:00+02:00",
+   "captured": null,
+   "ingested": null,
+   "confidence": "medium",
+   "conflicts": [
+    "#c-0001"
+   ]
+  }
+ ],
+ "edges": [
+  {
+   "from": "10_ai/attn.md",
+   "to": "10_ai/_originals/attn.pdf",
+   "kind": "source"
+  },
+  {
+   "from": "90_wiki/entities/jurgen-schmidhuber.md",
+   "to": "11_research/rnn.md",
+   "kind": "wiki"
+  },
+  {
+   "from": "90_wiki/entities/jurgen-schmidhuber.md",
+   "to": "90_wiki/sources/rnn.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/entities/vaswani.md",
+   "to": "10_ai/attn.md",
+   "kind": "wiki"
+  },
+  {
+   "from": "90_wiki/entities/vaswani.md",
+   "to": "90_wiki/sources/attn.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/sources/attn.md",
+   "to": "10_ai/attn.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/sources/attn.md",
+   "to": "10_ai/attn.md",
+   "kind": "wiki"
+  },
+  {
+   "from": "90_wiki/sources/rnn.md",
+   "to": "11_research/rnn.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/sources/rnn.md",
+   "to": "11_research/rnn.md",
+   "kind": "wiki"
+  },
+  {
+   "from": "90_wiki/topics/attention.md",
+   "to": "10_ai/attn.md",
+   "kind": "wiki"
+  },
+  {
+   "from": "90_wiki/topics/attention.md",
+   "to": "11_research/idea note.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/attention.md",
+   "to": "11_research/rnn.md",
+   "kind": "wiki"
+  },
+  {
+   "from": "90_wiki/topics/attention.md",
+   "to": "90_wiki/entities/vaswani.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/attention.md",
+   "to": "90_wiki/sources/attn.md",
+   "kind": "link"
+  },
+  {
+   "from": "90_wiki/topics/attention.md",
+   "to": "90_wiki/sources/rnn.md",
+   "kind": "link"
+  }
+ ]
+}
