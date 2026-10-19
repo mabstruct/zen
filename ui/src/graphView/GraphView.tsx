@@ -142,14 +142,14 @@ export function GraphView({ graph, selected, onSelect, onReset }: { graph: Graph
             const s = n as SNode, r = nodeRadius(n), fill = nodeColour(n, colourMode)
             const showLabel = (labels && r >= 10) || hover?.id === n.id || (labels && near?.has(n.id) === true)
             return (
-              <g key={n.id} data-node-id={n.id} transform={`translate(${s.x},${s.y})`} opacity={dim(n.id)} style={{ cursor: 'pointer' }}
+              <g key={n.id} data-node-id={n.id} transform={`translate(${s.x},${s.y})`} opacity={dim(n.id)} data-ingested={n.ingested} style={{ cursor: 'pointer' }}
                 onClick={() => onSelect(n.id)}
                 onMouseEnter={e => setHover({ id: n.id, x: e.clientX, y: e.clientY })}
                 onMouseMove={e => setHover({ id: n.id, x: e.clientX, y: e.clientY })}
                 onMouseLeave={() => setHover(null)}>
                 {n.kind === 'source'
-                  ? <rect x={-r} y={-r} width={2 * r} height={2 * r} rx={2} fill={fill} />
-                  : <circle r={r} fill={fill} />}
+                  ? <rect x={-r} y={-r} width={2 * r} height={2 * r} rx={2} fill={fill} opacity={n.ingested ? 1 : 0.35} />
+                  : <circle r={r} fill={fill} opacity={n.ingested ? 1 : 0.35} />}
                 {selected === n.id && <circle r={r + 4} fill="none" stroke="var(--color-text)" strokeWidth={1.5 / transform.k} />}
                 {showLabel && <text y={r + 11} textAnchor="middle" fontSize={10} fill="var(--color-text)" pointerEvents="none">{n.title}</text>}
               </g>
@@ -168,7 +168,7 @@ export function GraphView({ graph, selected, onSelect, onReset }: { graph: Graph
       {hover && hovered && (
         <div className="pointer-events-none fixed z-10 rounded border border-border bg-surface px-2 py-1 text-xs" style={{ left: hover.x + 12, top: hover.y + 12 }}>
           <div className="font-medium">{hovered.title}</div>
-          <div className="text-muted">{hovered.kind}{hovered.confidence ? ` · ${hovered.confidence}` : ''}{hovered.kind !== 'source' ? ` · ${sources.get(hovered.id) ?? 0} sources` : ''}</div>
+          <div className="text-muted">{hovered.kind}{hovered.confidence ? ` · ${hovered.confidence}` : ''}{hovered.kind !== 'source' ? ` · ${sources.get(hovered.id) ?? 0} sources` : ''}{!hovered.ingested ? ' · not ingested' : ''}</div>
         </div>
       )}
     </div>

@@ -64,7 +64,7 @@ export function Reader({ graph, owners, path, onNavigate }: {
 
   const click = (e: MouseEvent<HTMLElement>) => {
     const a = (e.target as HTMLElement).closest('a[data-zen-path]')
-    if (!a) return
+    if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
     e.preventDefault()
     onNavigate(a.getAttribute('data-zen-path')!)
   }
@@ -88,7 +88,8 @@ export function Reader({ graph, owners, path, onNavigate }: {
         <h1 className="text-xl font-semibold">{node.title}</h1>
         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
           <span>{node.kind}</span>
-          <Dots level={node.confidence} />
+          {node.kind !== 'source' && <Dots level={node.confidence} />}
+          {!node.ingested && <span>not ingested</span>}
           {node.clusters.length > 0 && <span>{node.clusters.join(', ')}</span>}
           {node.updated && <span>updated {node.updated.slice(0, 10)}</span>}
           {node.conflicts.length > 0 && <span className="text-conflict">open conflicts: {node.conflicts.join(', ')}</span>}

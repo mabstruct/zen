@@ -1,20 +1,23 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { existsSync, rmSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { beforeEach, describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { checkTarget, forbidden, run, summarise, writeExport } from './export.ts'
 import type { Graph } from '../src/types.ts'
 
 const REPO = '/some/where/zen'
-let tmpA: string, tmpB: string, tmpC: string, DIST_FIXTURE: string
+let tmpA: string, tmpB: string, tmpC: string, DIST_FIXTURE: string, BASE: string
 
 beforeEach(() => {
   const base = mkdtempSync(join(tmpdir(), 'zen-export-test-'))
+  BASE = base
   tmpA = join(base, 'a'); tmpB = join(base, 'b'); tmpC = join(base, 'c'); DIST_FIXTURE = join(base, 'dist')
   for (const d of [tmpA, tmpB, tmpC, join(DIST_FIXTURE, 'data')]) mkdirSync(d, { recursive: true })
   writeFileSync(join(DIST_FIXTURE, 'index.html'), '<html></html>')
   writeFileSync(join(DIST_FIXTURE, 'data/graph.json'), '{}')
 })
+
+afterEach(() => { rmSync(BASE, { recursive: true, force: true }) })
 
 describe('export', () => {
   test('refuses a folder inside the repo', () => {

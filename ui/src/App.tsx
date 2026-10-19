@@ -38,7 +38,7 @@ export default function App() {
   const select = useCallback((x: string) => {
     const node = graph?.nodes.find(n => n.id === (owners.get(x) ?? x))
     if (!node) return
-    const target = node.kind === 'source' ? node.vault : node.wiki ?? node.vault
+    const target = x !== node.id && (x === node.wiki || x === node.vault) ? x : node.wiki ?? node.vault
     if (target) navigate(target)
   }, [graph, owners, navigate])
   const reset = () => {

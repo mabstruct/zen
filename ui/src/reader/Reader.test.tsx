@@ -55,6 +55,12 @@ test('Reader: un-ingested source opens on Text; ingested source link opens Wiki 
   expect(nav).toHaveBeenCalledWith('10_x/a.md')
 })
 
+test('Reader: un-ingested source is labelled, sources show no confidence dots', async () => {
+  render(<Reader graph={G} owners={O} path="10_x/b.md" onNavigate={vi.fn()} />)
+  expect(await screen.findByText('not ingested')).toBeInTheDocument()
+  expect(screen.queryByLabelText(/confidence/)).toBeNull()
+})
+
 test('Reader: companion shows summary with extracted text collapsed', async () => {
   render(<Reader graph={G} owners={O} path="10_x/a.md" onNavigate={vi.fn()} />)
   expect(await screen.findByText('Companion summary.')).toBeInTheDocument()
