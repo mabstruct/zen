@@ -7,6 +7,20 @@
   --color-text: #e6e6ee;
   --color-muted: #8b8ba0;
   --color-accent: #6ee7d8;
+  --color-edge: #8b8ba0;
+  --color-conflict: #f0525a;
+  --color-kind-topic: #6ee7d8;
+  --color-kind-entity: #f5b85a;
+  --color-kind-synthesis: #b392f5;
+  --color-kind-source: #7aa7f5;
+  --color-cluster-0: #6ee7d8;
+  --color-cluster-1: #f5b85a;
+  --color-cluster-2: #b392f5;
+  --color-cluster-3: #7aa7f5;
+  --color-cluster-4: #f58fb4;
+  --color-cluster-5: #9be26b;
+  --color-cluster-6: #f5946a;
+  --color-cluster-7: #5ac8e8;
 }
 
 html, body, #root { height: 100%; }
