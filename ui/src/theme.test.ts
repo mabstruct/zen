@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { expect, test } from 'vitest'
 import { KINDS } from './graphView/style'
 
-const css = readFileSync(new URL('./index.css', import.meta.url), 'utf8')
+const css = readFileSync('src/index.css', 'utf8')
 
 test('index.css keeps every colour variable the graph can use', () => {
   expect(css).toMatch(/@theme static/)
