@@ -48,3 +48,16 @@ def test_scalar_sources_is_one_wiki_edge(vault: Path):
           "---\ntitle: Single\ntype: wiki-topic\nsources: 10_ai/attention.md\nconfidence: low\n---\nx\n")
     m = map_json.build(vt.scan(vault), NOW)
     assert ("90_wiki/topics/single.md", "10_ai/attention.md", "wiki") in {(e["from"], e["to"], e["kind"]) for e in m["edges"]}
+
+
+def test_nodes_carry_confidence_and_open_conflicts(vault: Path):
+    from conftest import write
+    write(vault / "90_wiki" / "topics" / "c.md",
+          "---\ntitle: C\ntype: wiki-topic\nsources: [10_ai/attention.md]\nconfidence: medium\n---\n"
+          "> [!conflict] #c-0007 — open\n> A: x\n\n> [!conflict] #c-0002 — resolved\n> A: y\n")
+    nodes = {n["id"]: n for n in map_json.build(vt.scan(vault), NOW)["nodes"]}
+    assert nodes["90_wiki/topics/c.md"]["confidence"] == "medium"
+    assert nodes["90_wiki/topics/c.md"]["conflicts"] == ["#c-0007"]
+    assert nodes["10_ai/attention.md"]["confidence"] is None
+    assert nodes["10_ai/attention.md"]["conflicts"] == []
+    assert nodes["10_ai/_originals/1706.03762.pdf"]["confidence"] is None

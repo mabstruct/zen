@@ -6,6 +6,16 @@ from pathlib import PurePosixPath
 from .vault import VaultScan, cluster_of
 
 
+CONFIDENCE = {"low", "medium", "high"}
+
+
+def _confidence(value: object) -> str | None:
+    if not isinstance(value, str):
+        return None
+    word = value.split("#", 1)[0].strip().lower()
+    return word if word in CONFIDENCE else None
+
+
 def build(scan: VaultScan, now: datetime) -> dict:
     nodes: dict[str, dict] = {}
     edges: list[dict] = []
@@ -15,18 +25,20 @@ def build(scan: VaultScan, now: datetime) -> dict:
             "id": d.rel, "path": d.rel, "title": d.title, "type": d.type, "cluster": d.cluster,
             "tags": d.tags, "size": d.size, "created": d.created, "updated": d.updated,
             "captured": d.captured, "ingested": d.ingested,
+            "confidence": _confidence(d.meta.get("confidence")), "conflicts": list(d.open_conflicts),
         }
     for o in scan.originals:
         nodes[o] = {
             "id": o, "path": o, "title": PurePosixPath(o).name, "type": "original", "cluster": cluster_of(o),
             "tags": [], "size": (scan.root / o).stat().st_size, "created": None, "updated": None,
-            "captured": None, "ingested": None,
+            "captured": None, "ingested": None, "confidence": None, "conflicts": [],
         }
     for d in scan.docs.values():
         for t in d.tags:
             tid = f"tag:{t}"
             nodes.setdefault(tid, {"id": tid, "path": None, "title": t, "type": "tag", "cluster": None, "tags": [],
-                                    "size": 0, "created": None, "updated": None, "captured": None, "ingested": None})
+                                    "size": 0, "created": None, "updated": None, "captured": None, "ingested": None,
+                                    "confidence": None, "conflicts": []})
 
     seen: set[tuple[str, str, str]] = set()
 
