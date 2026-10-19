@@ -84,3 +84,8 @@ vault/
 
 # --- brainstorm mockups (superpowers visual companion) ---
 .superpowers/
+
+# --- zen-ui ---
+ui/public/data/
+ui/test-results/
+ui/playwright-report/
