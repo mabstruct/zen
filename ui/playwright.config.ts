@@ -18,7 +18,7 @@ export default defineConfig({
       timeout: 120_000,
     },
     {
-      command: `node scripts/export.ts ${site}/zen --yes --vault test/fixture-vault && npx serve ${site} -l 4174`,
+      command: `node scripts/export.ts "${site}/zen" --yes --vault test/fixture-vault && npx serve "${site}" -l 4174`,
       url: 'http://localhost:4174/zen/',
       reuseExistingServer: false,
       timeout: 120_000,

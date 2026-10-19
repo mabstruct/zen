@@ -1,8 +1,8 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { beforeEach, describe, expect, test } from 'vitest'
-import { checkTarget, forbidden, summarise, writeExport } from './export.ts'
+import { checkTarget, forbidden, run, summarise, writeExport } from './export.ts'
 import type { Graph } from '../src/types.ts'
 
 const REPO = '/some/where/zen'
@@ -49,5 +49,17 @@ describe('export', () => {
       edges: [],
     } as unknown as Graph
     expect(summarise(g)).toEqual({ clusters: [['10_a', 2], ['11_b', 1]], nodes: 4, pages: 4 })
+  })
+  test('forbidden flags any path with a .env segment', () => {
+    mkdirSync(join(tmpA, '.env.d'), { recursive: true }); writeFileSync(join(tmpA, '.env.d/x.txt'), '')
+    expect(forbidden(tmpA)).toEqual(['.env.d/x.txt'])
+  })
+  test('an aborted run writes nothing and leaves no temp dir', async () => {
+    const tmpRoot = join(tmpA, 'tmp'); mkdirSync(tmpRoot)
+    const folder = join(tmpA, 'out')
+    const code = await run({ folder, vault: join(process.cwd(), 'test/fixture-vault'), repoRoot: REPO, yes: false, confirm: async () => 'no', tmpRoot })
+    expect(code).toBe(1)
+    expect(readdirSync(tmpRoot)).toEqual([])
+    expect(existsSync(folder)).toBe(false)
   })
 })

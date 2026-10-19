@@ -3,32 +3,11 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, 
 import { tmpdir } from 'node:os'
 import { basename, dirname, join, relative, resolve, sep } from 'node:path'
 import { createInterface } from 'node:readline'
+import { checkTarget } from './check-target.ts'
 import { snapshot } from './snapshot.ts'
 import type { Graph } from '../src/types.ts'
 
-function realish(p: string): string {
-  const abs = resolve(p)
-  let head = abs
-  const tail: string[] = []
-  while (!existsSync(head) && dirname(head) !== head) {
-    tail.unshift(basename(head))
-    head = dirname(head)
-  }
-  return join(existsSync(head) ? realpathSync(head) : head, ...tail)
-}
-
-export function checkTarget(folder: string, repoRoot: string): string | null {
-  const f = realish(folder)
-  const root = realish(repoRoot)
-  if (f === root || f.startsWith(root + sep)) return `export folder is inside the zen repo: ${folder}`
-  if (existsSync(f)) {
-    const entries = readdirSync(f).filter((e) => e !== '.git')
-    if (entries.length > 0 && !existsSync(join(f, '.zen-export'))) {
-      return `folder is not empty and not a previous ZEN export: ${folder}`
-    }
-  }
-  return null
-}
+export { checkTarget }
 
 export function summarise(graph: Graph): { clusters: [string, number][]; nodes: number; pages: number } {
   const counts = new Map<string, number>()
@@ -77,7 +56,7 @@ export function forbidden(folder: string): string[] {
       if (e.name === '.git' && dir === folder) continue
       const full = join(dir, e.name)
       const rel = relative(folder, full)
-      const hit = rel.split(sep).some((s) => s.includes('_originals')) || e.name.startsWith('.env')
+      const hit = rel.split(sep).some((s) => s.includes('_originals') || s.startsWith('.env'))
       if (e.isDirectory() && readdirSync(full).length > 0) walk(full)
       else if (hit) out.push(rel)
     }
@@ -99,60 +78,88 @@ async function readLine(): Promise<string> {
   })
 }
 
-async function main(): Promise<void> {
-  const positional = process.argv.slice(2).filter((a, i, all) => !a.startsWith('--') && all[i - 1] !== '--vault')
-  if (positional.length < 1) {
-    console.error('usage: node scripts/export.ts <folder> [--yes] [--vault ../vault]')
-    process.exit(2)
-  }
-  const folder = resolve(process.env.ZEN_CALLER_CWD ?? process.cwd(), positional[0])
-  const vault = resolve(arg('--vault', '../vault'))
-  const repoRoot = execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim()
-  const refusal = checkTarget(folder, repoRoot)
+export function localIso(d: Date = new Date()): string {
+  const p = (n: number, w = 2): string => String(n).padStart(w, '0')
+  const off = -d.getTimezoneOffset()
+  const sign = off >= 0 ? '+' : '-'
+  return (
+    `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}` +
+    `${sign}${p(Math.floor(Math.abs(off) / 60))}:${p(Math.abs(off) % 60)}`
+  )
+}
+
+export interface RunOptions {
+  folder: string
+  vault: string
+  repoRoot: string
+  yes: boolean
+  confirm: () => Promise<string>
+  tmpRoot: string
+}
+
+export async function run(o: RunOptions): Promise<number> {
+  const refusal = checkTarget(o.folder, o.repoRoot)
   if (refusal) {
     console.error(refusal)
-    process.exit(2)
+    return 2
   }
-
-  const work = mkdtempSync(join(tmpdir(), 'zen-export-build-'))
+  const work = mkdtempSync(join(o.tmpRoot, 'zen-export-build-'))
+  let wrote = false
   try {
     const publicDir = join(work, 'public')
-    const r = snapshot(vault, join(publicDir, 'data'))
+    const r = snapshot(o.vault, join(publicDir, 'data'))
     for (const w of r.warnings) console.error(w)
     const graph = JSON.parse(readFileSync(join(publicDir, 'data', 'graph.json'), 'utf8')) as Graph
     const s = summarise(graph)
     for (const [c, n] of s.clusters) console.log(`  ${c}: ${n}`)
     console.log(`${s.nodes} nodes, ${s.pages} pages`)
     console.log('This exports the whole vault shown above, personal clusters included.')
-    if (!process.argv.includes('--yes')) {
+    if (!o.yes) {
       process.stdout.write('Type yes to continue: ')
-      if ((await readLine()).trim() !== 'yes') {
+      if ((await o.confirm()).replace(/\r?\n$/, '') !== 'yes') {
         console.error('aborted, nothing written')
-        process.exit(1)
+        return 1
       }
     }
-
     const dist = join(work, 'dist')
     execFileSync('npx', ['vite', 'build', '--outDir', dist, '--emptyOutDir'], {
       stdio: 'inherit',
       env: { ...process.env, ZEN_PUBLIC_DIR: publicDir },
     })
-    writeExport(dist, folder, { when: new Date().toISOString(), nodes: s.nodes, pages: s.pages })
+    wrote = true
+    writeExport(dist, o.folder, { when: localIso(), nodes: s.nodes, pages: s.pages })
+    const bad = forbidden(o.folder)
+    if (bad.length > 0) {
+      emptyKeepingGit(o.folder)
+      console.error(`export contained forbidden paths, folder emptied:\n${bad.map((p) => `  ${p}`).join('\n')}`)
+      return 1
+    }
+    console.log(`exported ${s.nodes} nodes, ${s.pages} pages to ${o.folder}`)
+    console.log('open it with GitHub Pages (Settings → Pages → Deploy from a branch → root)')
+    console.log(`or locally: npx serve ${o.folder}`)
+    return 0
+  } catch (e) {
+    if (wrote) emptyKeepingGit(o.folder)
+    console.error(e instanceof Error ? e.message : String(e))
+    return 1
   } finally {
     rmSync(work, { recursive: true, force: true })
   }
-
-  const bad = forbidden(folder)
-  if (bad.length > 0) {
-    emptyKeepingGit(folder)
-    console.error(`export contained forbidden paths, folder emptied:\n${bad.map((p) => `  ${p}`).join('\n')}`)
-    process.exit(1)
-  }
-  const s = JSON.parse(readFileSync(join(folder, 'data', 'graph.json'), 'utf8')) as Graph
-  const t = summarise(s)
-  console.log(`exported ${t.nodes} nodes, ${t.pages} pages to ${folder}`)
-  console.log('open it with GitHub Pages (Settings → Pages → Deploy from a branch → root)')
-  console.log(`or locally: npx serve ${folder}`)
 }
 
-if (import.meta.main || process.argv[1]?.endsWith('export.ts')) await main()
+if (import.meta.main || process.argv[1]?.endsWith('export.ts')) {
+  const positional = process.argv.slice(2).filter((a, i, all) => !a.startsWith('--') && all[i - 1] !== '--vault')
+  if (positional.length < 1) {
+    console.error('usage: node scripts/export.ts <folder> [--yes] [--vault ../vault]')
+    process.exitCode = 2
+  } else {
+    process.exitCode = await run({
+      folder: resolve(positional[0]),
+      vault: resolve(arg('--vault', '../vault')),
+      repoRoot: execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim(),
+      yes: process.argv.includes('--yes'),
+      confirm: readLine,
+      tmpRoot: tmpdir(),
+    })
+  }
+}
