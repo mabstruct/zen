@@ -57,23 +57,62 @@ Brain-First ladder: Claude reads `vault/INDEX.md` first, then the wiki, then run
 (cd tools && uv run pytest -q)
 ```
 
-## Export
+## GUI (zen-ui)
 
-zen-ui (`ui/`) is a read-only browser for the vault: a graph of the wiki and its sources, and a reader with live links.
-Browse locally with `cd ui && npm run dev`.
-For a personal static export run `./scripts/ui-export.sh <folder>` from `zen/` (add `--yes` to skip the prompt); the folder must be outside this repo.
+zen-ui (`ui/`) is a read-only browser for the vault: a graph of the wiki and its sources, and a reader with live links. It never writes to the vault and never shows `_originals/`.
+
+### Run it
+
+First time only:
+
+```
+cd ui && npm ci
+```
+
+Every time, from `zen/`:
+
+```
+(cd tools && uv run zen-index --vault ../vault)   # only if the vault changed since the last index
+cd ui && npm run dev                              # snapshots ../vault into public/data, then starts Vite
+```
+
+Open the URL Vite prints (usually http://localhost:5173). The snapshot is taken at start, so after `/zen-ingest`, `/zen-intake` or `/zen-note`, stop the server and run `npm run dev` again (or run `npm run snapshot` and reload). To browse another vault: `npm run snapshot -- --vault <path>`, then `npx vite`.
+
+### Use it
+
+- **Graph:** colour = kind (topic, entity, synthesis, source); size = confidence plus incoming links; sources are squares; red dashed edges are open conflicts. Faded sources are not ingested yet.
+- **Hover** a node to highlight its neighbourhood. **Click** to open it in the reader and centre it. Drag and scroll to move and zoom.
+- **Controls** (top left): Reset (fit view, clear trail), Labels on/off, Colour by kind or by cluster, Find (type a title, press Enter). **Legend** (bottom left): click a kind to hide or show it.
+- **Reader** (right): title, kind, confidence dots, clusters, updated date, open conflicts. Links to other vault pages navigate inside the app; links to originals show as "original not included"; web links open a new tab; ctrl/cmd-click opens a page in a new tab.
+- **Sources** have two tabs: Wiki summary and Text (the companion: summary first, extracted text collapsed).
+- **Trail** (top of reader): pages visited this session; click to go back.
+- **Share a page:** copy the URL (`#/p/<vault path>`); it opens with the graph centred on that page.
+
+### Export
+
+For a personal static copy run `./scripts/ui-export.sh <folder>` from `zen/` (add `--yes` to skip the prompt); the folder must be outside this repo and empty or a previous export.
 The export holds the whole vault the GUI shows, personal clusters included, so publishing it is your decision.
 Never copied: `_originals/` and `.env*`.
 Open it with GitHub Pages (Settings → Pages → Deploy from a branch → root) or `npx serve <folder>`; opening `index.html` from disk does not work.
+
+### Tests
+
+```
+cd ui && npm test && npm run typecheck && npm run e2e
+```
+
+`npm run e2e` overwrites `public/data` with the test vault; run `npm run snapshot` afterwards.
 
 ## Docs
 
 - [Design spec](docs/superpowers/specs/2026-10-14-zen-design.md)
 - [Implementation plan](docs/superpowers/plans/2026-10-14-zen-v1.md)
+- [zen-ui design spec](docs/superpowers/specs/2026-10-19-zen-ui-design.md)
+- [zen-ui implementation plan](docs/superpowers/plans/2026-10-19-zen-ui.md)
 - [Baseline digest](docs/references/baseline-video-the-node-ai-second-brain.md)
 - [Trust test](docs/tests/trust-test.md)
 - [Benchmark template](docs/benchmarks/TEMPLATE.md)
 
 ## Status
 
-v1 built 2026-10-15; trust test and first benchmark pending (docs/tests, docs/benchmarks).
+v1 built 2026-10-15; zen-ui v1 built 2026-10-19; trust test and first benchmark pending (docs/tests, docs/benchmarks).
