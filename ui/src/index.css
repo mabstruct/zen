@@ -25,3 +25,22 @@
 
 html, body, #root { height: 100%; }
 body { background: var(--color-bg); color: var(--color-text); }
+
+.zen-prose { line-height: 1.6; font-size: 0.92rem; }
+.zen-prose h2, .zen-prose h3, .zen-prose h4 { margin: 1.2em 0 0.4em; font-weight: 600; color: var(--color-text); }
+.zen-prose h2 { font-size: 1.15rem; }
+.zen-prose h3 { font-size: 1.02rem; }
+.zen-prose p { margin: 0.6em 0; }
+.zen-prose ul { list-style: disc; padding-left: 1.4em; margin: 0.6em 0; }
+.zen-prose ol { list-style: decimal; padding-left: 1.4em; margin: 0.6em 0; }
+.zen-prose a { color: var(--color-accent); text-decoration: underline; }
+.zen-prose code { background: var(--color-bg); padding: 0.1em 0.3em; border-radius: 3px; font-size: 0.85em; }
+.zen-prose pre { background: var(--color-bg); padding: 0.75em; border-radius: 4px; overflow-x: auto; }
+.zen-prose pre code { padding: 0; background: none; }
+.zen-prose blockquote { border-left: 3px solid var(--color-border); padding-left: 0.8em; color: var(--color-muted); margin: 0.6em 0; }
+.zen-prose blockquote.zen-conflict { padding: 0.5em 0.8em; border-radius: 4px; }
+.zen-prose blockquote.zen-conflict--open { border-left-color: var(--color-conflict); background: color-mix(in srgb, var(--color-conflict) 12%, transparent); color: var(--color-text); }
+.zen-prose blockquote.zen-conflict--resolved { border-left-color: var(--color-border); color: var(--color-muted); }
+.zen-prose .zen-original, .zen-prose .zen-deadlink { color: var(--color-muted); }
+.zen-prose table { border-collapse: collapse; }
+.zen-prose th, .zen-prose td { border: 1px solid var(--color-border); padding: 0.2em 0.5em; }
