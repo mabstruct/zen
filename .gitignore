@@ -81,3 +81,6 @@ vault/
 
 # --- planned-ingest scratch (plans are deleted after a successful run) ---
 .ingest/
+
+# --- brainstorm mockups (superpowers visual companion) ---
+.superpowers/
