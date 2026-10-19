@@ -10,7 +10,8 @@
     "snapshot": "node scripts/snapshot.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "export": "node scripts/export.ts"
   },
   "dependencies": {
     "d3-drag": "3.0.0",
@@ -38,6 +39,7 @@
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "5.2.0",
     "jsdom": "30.1.3",
+    "serve": "14.2.6",
     "tailwindcss": "4.3.3",
     "typescript": "7.0.2",
     "vite": "7.3.7",

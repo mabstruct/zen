@@ -57,6 +57,15 @@ Brain-First ladder: Claude reads `vault/INDEX.md` first, then the wiki, then run
 (cd tools && uv run pytest -q)
 ```
 
+## Export
+
+zen-ui (`ui/`) is a read-only browser for the vault: a graph of the wiki and its sources, and a reader with live links.
+Browse locally with `cd ui && npm run dev`.
+For a personal static export run `./scripts/ui-export.sh <folder>` from `zen/` (add `--yes` to skip the prompt); the folder must be outside this repo.
+The export holds the whole vault the GUI shows, personal clusters included, so publishing it is your decision.
+Never copied: `_originals/` and `.env*`.
+Open it with GitHub Pages (Settings → Pages → Deploy from a branch → root) or `npx serve <folder>`; opening `index.html` from disk does not work.
+
 ## Docs
 
 - [Design spec](docs/superpowers/specs/2026-10-14-zen-design.md)
